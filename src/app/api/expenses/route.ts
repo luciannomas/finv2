@@ -18,8 +18,11 @@ export async function GET(req: NextRequest) {
 
   const now = new Date()
   const todayStr = now.toISOString().split('T')[0]
+  const month = searchParams.get('month') // YYYY-MM
 
-  if (period === 'day') {
+  if (month) {
+    filter.date = { $gte: `${month}-01`, $lte: `${month}-31` }
+  } else if (period === 'day') {
     filter.date = todayStr
   } else if (period === 'week') {
     const weekAgo = new Date(now)

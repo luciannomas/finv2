@@ -1,26 +1,46 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
-import { TrendingDown, TrendingUp, ArrowRight } from 'lucide-react'
+import { TrendingDown, TrendingUp, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { useCurrency } from '@/lib/currency'
 import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 import type { Expense, Category, Income } from '@/lib/types'
 
-type Period = 'day' | 'week' | 'month'
+const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+const MONTH_NAMES_FULL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+function getMonthKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+function getLast8Months() {
+  const months = []
+  const now = new Date()
+  for (let i = 0; i < 8; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    months.push({ key: getMonthKey(d), label: MONTH_NAMES[d.getMonth()], year: d.getFullYear(), month: d.getMonth() })
+  }
+  return months
+}
+
+type QuickPeriod = 'day' | 'week'
 
 export default function DashboardPage() {
   const { data: session } = useSession()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [incomes, setIncomes] = useState<Income[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [period, setPeriod] = useState<Period>('month')
+  const [quickPeriod, setQuickPeriod] = useState<QuickPeriod | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState<string>(getMonthKey(new Date()))
   const [loading, setLoading] = useState(true)
+  const monthScrollRef = useRef<HTMLDivElement>(null)
 
   const { format } = useCurrency()
   const firstName = session?.user?.name?.split(' ')[0] || 'Usuario'
+  const months = getLast8Months()
 
   useEffect(() => {
     fetch('/api/categories').then(r => r.json()).then(d => setCategories(Array.isArray(d) ? d : []))
@@ -28,29 +48,34 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setLoading(true)
+    let expUrl: string, incUrl: string
+    if (quickPeriod) {
+      expUrl = `/api/expenses?period=${quickPeriod}`
+      incUrl = `/api/incomes?period=${quickPeriod}`
+    } else {
+      expUrl = `/api/expenses?month=${selectedMonth}`
+      incUrl = `/api/incomes?month=${selectedMonth}`
+    }
     Promise.all([
-      fetch(`/api/expenses?period=${period}`).then(r => r.json()),
-      fetch(`/api/incomes?period=${period}`).then(r => r.json()),
+      fetch(expUrl).then(r => r.json()),
+      fetch(incUrl).then(r => r.json()),
     ]).then(([expData, incData]) => {
       setExpenses(Array.isArray(expData) ? expData : [])
       setIncomes(Array.isArray(incData) ? incData : [])
       setLoading(false)
     })
-  }, [period])
+  }, [quickPeriod, selectedMonth])
 
   const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0)
   const totalIncome = incomes.reduce((sum, i) => sum + i.amount, 0)
   const balance = totalIncome - totalSpent
 
-  // Category breakdown
   const categoryTotals = categories.map(cat => {
     const total = expenses.filter(e => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0)
     return { ...cat, total }
   }).filter(c => c.total > 0).sort((a, b) => b.total - a.total)
 
   const maxCatTotal = Math.max(...categoryTotals.map(c => c.total), 1)
-
-  // Recent expenses (last 5)
   const recentExpenses = expenses.slice(0, 5)
 
   const greeting = () => {
@@ -60,7 +85,14 @@ export default function DashboardPage() {
     return 'Buenas noches'
   }
 
-  const periodLabel = { day: 'hoy', week: 'esta semana', month: 'este mes' }[period]
+  const periodLabel = quickPeriod === 'day' ? 'hoy' : quickPeriod === 'week' ? 'esta semana' : (() => {
+    const m = months.find(m => m.key === selectedMonth)
+    return m ? `${MONTH_NAMES_FULL[m.month]} ${m.year}` : ''
+  })()
+
+  const scrollMonths = (dir: number) => {
+    monthScrollRef.current?.scrollBy({ left: dir * 80, behavior: 'smooth' })
+  }
 
   return (
     <div className="px-4 pt-12 pb-4">
@@ -71,10 +103,66 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-white">{firstName} 👋</h1>
         </div>
         <div className="w-11 h-11 rounded-2xl gradient-violet flex items-center justify-center">
-          <span className="text-white font-bold text-base">
-            {firstName.charAt(0).toUpperCase()}
-          </span>
+          <span className="text-white font-bold text-base">{firstName.charAt(0).toUpperCase()}</span>
         </div>
+      </div>
+
+      {/* Period selector */}
+      <div className="mb-4">
+        {/* Quick filters */}
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => setQuickPeriod('day')}
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              quickPeriod === 'day' ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-400'
+            }`}
+          >
+            Hoy
+          </button>
+          <button
+            onClick={() => setQuickPeriod('week')}
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              quickPeriod === 'week' ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-400'
+            }`}
+          >
+            Semana
+          </button>
+          <button
+            onClick={() => setQuickPeriod(null)}
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              quickPeriod === null ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-400'
+            }`}
+          >
+            Mes
+          </button>
+        </div>
+
+        {/* Month picker */}
+        {quickPeriod === null && (
+          <div className="flex items-center gap-1">
+            <button onClick={() => scrollMonths(-1)} className="text-slate-500 hover:text-white flex-shrink-0">
+              <ChevronLeft size={16} />
+            </button>
+            <div ref={monthScrollRef} className="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
+              {months.map(m => (
+                <button
+                  key={m.key}
+                  onClick={() => setSelectedMonth(m.key)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    selectedMonth === m.key
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {m.label} {m.year !== new Date().getFullYear() ? m.year : ''}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => scrollMonths(1)} className="text-slate-500 hover:text-white flex-shrink-0">
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main balance card */}
@@ -83,24 +171,9 @@ export default function DashboardPage() {
         <p className={`text-4xl font-bold mb-1 ${balance >= 0 ? 'text-white' : 'text-rose-300'}`}>
           {loading ? '...' : (balance >= 0 ? '+' : '') + format(balance)}
         </p>
-        <p className="text-violet-300 text-xs mb-4">
+        <p className="text-violet-300 text-xs">
           {loading ? '' : `${format(totalIncome)} ingresos · ${format(totalSpent)} gastos`}
         </p>
-        <div className="flex gap-1.5">
-          {(['day', 'week', 'month'] as Period[]).map(p => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                period === p
-                  ? 'bg-white text-violet-700'
-                  : 'bg-white/20 text-white hover:bg-white/30'
-              }`}
-            >
-              {p === 'day' ? 'Hoy' : p === 'week' ? 'Semana' : 'Mes'}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Income / Expense summary row */}
@@ -147,10 +220,7 @@ export default function DashboardPage() {
                   <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${(cat.total / maxCatTotal) * 100}%`,
-                        background: cat.color,
-                      }}
+                      style={{ width: `${(cat.total / maxCatTotal) * 100}%`, background: cat.color }}
                     />
                   </div>
                 </div>
@@ -160,12 +230,12 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Weekly bar chart */}
-      {period === 'month' && expenses.length > 0 && (
+      {/* Weekly bar chart — solo en modo mes */}
+      {quickPeriod === null && expenses.length > 0 && (
         <Card className="mb-5">
           <CardContent className="pt-4">
-            <h2 className="text-white font-bold mb-3">Últimas semanas</h2>
-            <WeeklyChart expenses={expenses} />
+            <h2 className="text-white font-bold mb-3">Semanas del mes</h2>
+            <WeeklyChart expenses={expenses} monthKey={selectedMonth} />
           </CardContent>
         </Card>
       )}
@@ -189,9 +259,7 @@ export default function DashboardPage() {
           <div className="text-center py-10">
             <TrendingDown size={40} className="text-slate-700 mx-auto mb-3" />
             <p className="text-slate-500">Sin gastos {periodLabel}</p>
-            <Link href="/expenses" className="text-violet-400 text-sm mt-2 inline-block">
-              Agregar gasto
-            </Link>
+            <Link href="/expenses" className="text-violet-400 text-sm mt-2 inline-block">Agregar gasto</Link>
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
@@ -199,19 +267,14 @@ export default function DashboardPage() {
               const cat = categories.find(c => c.id === expense.categoryId)
               return (
                 <div key={expense.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${cat?.color}22` }}
-                  >
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${cat?.color}22` }}>
                     <div className="w-3 h-3 rounded-full" style={{ background: cat?.color }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-semibold truncate">{expense.description}</p>
                     <p className="text-slate-500 text-xs">{formatDate(expense.date)} · {cat?.name}</p>
                   </div>
-                  <span className="text-rose-400 font-bold text-sm flex-shrink-0">
-                    -{format(expense.amount)}
-                  </span>
+                  <span className="text-rose-400 font-bold text-sm flex-shrink-0">-{format(expense.amount)}</span>
                 </div>
               )
             })}
@@ -222,24 +285,21 @@ export default function DashboardPage() {
   )
 }
 
-function WeeklyChart({ expenses }: { expenses: Expense[] }) {
-  const weeks = [3, 2, 1, 0].map(weeksAgo => {
-    const end = new Date()
-    end.setDate(end.getDate() - weeksAgo * 7)
-    const start = new Date(end)
-    start.setDate(start.getDate() - 7)
-
-    const total = expenses.filter(e => {
-      return e.date > start.toISOString().split('T')[0] && e.date <= end.toISOString().split('T')[0]
-    }).reduce((s, e) => s + e.amount, 0)
-
-    return {
-      label: weeksAgo === 0 ? 'Esta' : weeksAgo === 1 ? 'Ant.' : `S-${weeksAgo + 1}`,
-      total,
-    }
+function WeeklyChart({ expenses, monthKey }: { expenses: Expense[], monthKey: string }) {
+  const [year, month] = monthKey.split('-').map(Number)
+  const weeks = [0, 1, 2, 3].map(w => {
+    const start = new Date(year, month - 1, w * 7 + 1)
+    const end = new Date(year, month - 1, w * 7 + 7)
+    const startStr = start.toISOString().split('T')[0]
+    const endStr = end.toISOString().split('T')[0]
+    const total = expenses.filter(e => e.date >= startStr && e.date <= endStr).reduce((s, e) => s + e.amount, 0)
+    return { label: `S${w + 1}`, total }
   })
 
   const max = Math.max(...weeks.map(w => w.total), 1)
+  const now = new Date()
+  const currentWeek = Math.floor((now.getDate() - 1) / 7)
+  const isCurrentMonth = monthKey === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
   return (
     <div className="flex items-end gap-2 h-20">
@@ -247,7 +307,7 @@ function WeeklyChart({ expenses }: { expenses: Expense[] }) {
         <div key={i} className="flex-1 flex flex-col items-center gap-1">
           <div className="w-full flex items-end justify-center" style={{ height: '60px' }}>
             <div
-              className={`w-full rounded-t-lg transition-all duration-500 ${i === weeks.length - 1 ? 'bg-violet-500' : 'bg-slate-700'}`}
+              className={`w-full rounded-t-lg transition-all duration-500 ${isCurrentMonth && i === currentWeek ? 'bg-violet-500' : 'bg-slate-700'}`}
               style={{ height: `${Math.max((week.total / max) * 100, 4)}%` }}
             />
           </div>

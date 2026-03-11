@@ -17,7 +17,11 @@ export async function GET(req: NextRequest) {
   if (!isAdmin) filter.userId = session.user.id
 
   const now = new Date()
-  if (period === 'day') {
+  const month = searchParams.get('month') // YYYY-MM
+
+  if (month) {
+    filter.date = { $gte: `${month}-01`, $lte: `${month}-31` }
+  } else if (period === 'day') {
     filter.date = now.toISOString().split('T')[0]
   } else if (period === 'week') {
     const weekAgo = new Date(now)
