@@ -1,5 +1,6 @@
 import { auth } from '@/auth'
-import { getStore } from '@/lib/store'
+import { connectDB } from '@/lib/mongodb'
+import { ExpenseModel } from '@/lib/models'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function PUT(
@@ -11,45 +12,44 @@ export async function PUT(
 
   const { id } = await params
   const body = await req.json()
-  const store = getStore()
+  await connectDB()
 
   const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
-  const idx = store.expenses.findIndex(
-    e => e.id === id && (isAdmin || e.userId === session.user.id)
+  const filter = isAdmin ? { _id: id } : { _id: id, userId: session.user.id }
+
+  const expense = await ExpenseModel.findOneAndUpdate(
+    filter,
+    {
+      $set: {
+        ...(body.description != null && { description: body.description }),
+        ...(body.amount != null && { amount: Number(body.amount) }),
+        ...(body.currency != null && { currency: body.currency === 'USD' ? 'USD' : 'ARS' }),
+        ...(body.categoryId != null && { categoryId: body.categoryId }),
+        ...(body.date != null && { date: body.date }),
+        ...(body.notes != null && { notes: body.notes }),
+      },
+    },
+    { new: true }
   )
 
-  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
-  store.expenses[idx] = {
-    ...store.expenses[idx],
-    description: body.description ?? store.expenses[idx].description,
-    amount: body.amount != null ? Number(body.amount) : store.expenses[idx].amount,
-    currency: (body.currency === 'USD' ? 'USD' : body.currency === 'ARS' ? 'ARS' : store.expenses[idx].currency) as 'ARS' | 'USD',
-    categoryId: body.categoryId ?? store.expenses[idx].categoryId,
-    date: body.date ?? store.expenses[idx].date,
-    notes: body.notes ?? store.expenses[idx].notes,
-  }
-
-  return NextResponse.json(store.expenses[idx])
+  if (!expense) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json(expense.toJSON())
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const store = getStore()
+  await connectDB()
 
   const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
-  const idx = store.expenses.findIndex(
-    e => e.id === id && (isAdmin || e.userId === session.user.id)
-  )
+  const filter = isAdmin ? { _id: id } : { _id: id, userId: session.user.id }
 
-  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
-  store.expenses.splice(idx, 1)
+  const expense = await ExpenseModel.findOneAndDelete(filter)
+  if (!expense) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({ success: true })
 }

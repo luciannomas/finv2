@@ -1,38 +1,37 @@
 import { auth } from '@/auth'
-import { getStore } from '@/lib/store'
+import { connectDB } from '@/lib/mongodb'
+import { ExpenseModel } from '@/lib/models'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const store = getStore()
+  await connectDB()
   const { searchParams } = new URL(req.url)
   const period = searchParams.get('period') || 'month'
 
   const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
-  let expenses = isAdmin
-    ? store.expenses
-    : store.expenses.filter(e => e.userId === session.user.id)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const filter: Record<string, any> = {}
+  if (!isAdmin) filter.userId = session.user.id
 
   const now = new Date()
   const todayStr = now.toISOString().split('T')[0]
 
   if (period === 'day') {
-    expenses = expenses.filter(e => e.date === todayStr)
+    filter.date = todayStr
   } else if (period === 'week') {
     const weekAgo = new Date(now)
     weekAgo.setDate(weekAgo.getDate() - 7)
-    const weekAgoStr = weekAgo.toISOString().split('T')[0]
-    expenses = expenses.filter(e => e.date >= weekAgoStr)
+    filter.date = { $gte: weekAgo.toISOString().split('T')[0] }
   } else if (period === 'month') {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    const monthStartStr = monthStart.toISOString().split('T')[0]
-    expenses = expenses.filter(e => e.date >= monthStartStr)
+    filter.date = { $gte: monthStart.toISOString().split('T')[0] }
   }
-  // 'all' returns everything
 
-  return NextResponse.json(expenses.sort((a, b) => b.date.localeCompare(a.date)))
+  const expenses = await ExpenseModel.find(filter).sort({ date: -1 })
+  return NextResponse.json(expenses.map(e => e.toJSON()))
 }
 
 export async function POST(req: NextRequest) {
@@ -40,20 +39,17 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const store = getStore()
+  await connectDB()
 
-  const newExpense = {
-    id: `exp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+  const expense = await ExpenseModel.create({
     description: body.description,
     amount: Number(body.amount),
-    currency: (body.currency === 'USD' ? 'USD' : 'ARS') as 'ARS' | 'USD',
+    currency: body.currency === 'USD' ? 'USD' : 'ARS',
     categoryId: body.categoryId,
     userId: session.user.id,
     date: body.date,
-    createdAt: new Date().toISOString(),
     notes: body.notes || '',
-  }
+  })
 
-  store.expenses.push(newExpense)
-  return NextResponse.json(newExpense, { status: 201 })
+  return NextResponse.json(expense.toJSON(), { status: 201 })
 }

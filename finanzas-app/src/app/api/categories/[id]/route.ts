@@ -1,5 +1,6 @@
 import { auth } from '@/auth'
-import { getStore } from '@/lib/store'
+import { connectDB } from '@/lib/mongodb'
+import { CategoryModel } from '@/lib/models'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function PUT(
@@ -11,42 +12,41 @@ export async function PUT(
 
   const { id } = await params
   const body = await req.json()
-  const store = getStore()
+  await connectDB()
 
   const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
-  const idx = store.categories.findIndex(
-    c => c.id === id && (isAdmin || c.userId === session.user.id)
+  const filter = isAdmin ? { _id: id } : { _id: id, userId: session.user.id }
+
+  const category = await CategoryModel.findOneAndUpdate(
+    filter,
+    {
+      $set: {
+        ...(body.name != null && { name: body.name }),
+        ...(body.color != null && { color: body.color }),
+        ...(body.icon != null && { icon: body.icon }),
+      },
+    },
+    { new: true }
   )
 
-  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
-  store.categories[idx] = {
-    ...store.categories[idx],
-    name: body.name ?? store.categories[idx].name,
-    color: body.color ?? store.categories[idx].color,
-    icon: body.icon ?? store.categories[idx].icon,
-  }
-
-  return NextResponse.json(store.categories[idx])
+  if (!category) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json(category.toJSON())
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const store = getStore()
+  await connectDB()
 
   const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
-  const idx = store.categories.findIndex(
-    c => c.id === id && (isAdmin || c.userId === session.user.id)
-  )
+  const filter = isAdmin ? { _id: id } : { _id: id, userId: session.user.id }
 
-  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
-  store.categories.splice(idx, 1)
+  const category = await CategoryModel.findOneAndDelete(filter)
+  if (!category) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({ success: true })
 }

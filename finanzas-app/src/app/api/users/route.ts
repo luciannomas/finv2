@@ -1,5 +1,6 @@
 import { auth } from '@/auth'
-import { getStore } from '@/lib/store'
+import { connectDB } from '@/lib/mongodb'
+import { UserModel } from '@/lib/models'
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 
@@ -10,9 +11,9 @@ export async function GET() {
   const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const store = getStore()
-  const users = store.users.map(({ password: _pw, ...u }) => u)
-  return NextResponse.json(users)
+  await connectDB()
+  const users = await UserModel.find({}, { password: 0 })
+  return NextResponse.json(users.map(u => u.toJSON()))
 }
 
 export async function POST(req: NextRequest) {
@@ -23,28 +24,21 @@ export async function POST(req: NextRequest) {
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await req.json()
-  const store = getStore()
+  await connectDB()
 
-  if (store.users.find(u => u.email === body.email)) {
-    return NextResponse.json({ error: 'Email already exists' }, { status: 400 })
-  }
+  const exists = await UserModel.findOne({ email: body.email })
+  if (exists) return NextResponse.json({ error: 'Email already exists' }, { status: 400 })
 
-  // Superadmin can create any role; admin can only create users
   let role = body.role || 'user'
-  if (session.user.role === 'admin' && role !== 'user') {
-    role = 'user'
-  }
+  if (session.user.role === 'admin' && role !== 'user') role = 'user'
 
-  const newUser = {
-    id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+  const user = await UserModel.create({
     name: body.name,
     email: body.email,
     password: await bcrypt.hash(body.password, 10),
     role,
-    createdAt: new Date().toISOString(),
-  }
+  })
 
-  store.users.push(newUser)
-  const { password: _pw, ...safeUser } = newUser
+  const { password: _pw, ...safeUser } = user.toJSON()
   return NextResponse.json(safeUser, { status: 201 })
 }

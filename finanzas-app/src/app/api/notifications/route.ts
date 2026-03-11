@@ -1,21 +1,25 @@
 import { auth } from '@/auth'
-import { getStore } from '@/lib/store'
+import { connectDB } from '@/lib/mongodb'
+import { NotificationSettingsModel } from '@/lib/models'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET() {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const store = getStore()
-  const settings = store.notificationSettings.find(s => s.userId === session.user.id)
+  await connectDB()
+  let settings = await NotificationSettingsModel.findOne({ userId: session.user.id })
 
   if (!settings) {
-    const defaultSettings = { userId: session.user.id, weeklyLimit: null, monthlyLimit: null, enabled: true }
-    store.notificationSettings.push(defaultSettings)
-    return NextResponse.json(defaultSettings)
+    settings = await NotificationSettingsModel.create({
+      userId: session.user.id,
+      weeklyLimit: null,
+      monthlyLimit: null,
+      enabled: true,
+    })
   }
 
-  return NextResponse.json(settings)
+  return NextResponse.json(settings.toJSON())
 }
 
 export async function PUT(req: NextRequest) {
@@ -23,21 +27,19 @@ export async function PUT(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const store = getStore()
+  await connectDB()
 
-  const idx = store.notificationSettings.findIndex(s => s.userId === session.user.id)
-  const updated = {
-    userId: session.user.id,
-    weeklyLimit: body.weeklyLimit ?? null,
-    monthlyLimit: body.monthlyLimit ?? null,
-    enabled: body.enabled ?? true,
-  }
+  const settings = await NotificationSettingsModel.findOneAndUpdate(
+    { userId: session.user.id },
+    {
+      $set: {
+        weeklyLimit: body.weeklyLimit ?? null,
+        monthlyLimit: body.monthlyLimit ?? null,
+        enabled: body.enabled ?? true,
+      },
+    },
+    { new: true, upsert: true }
+  )
 
-  if (idx >= 0) {
-    store.notificationSettings[idx] = updated
-  } else {
-    store.notificationSettings.push(updated)
-  }
-
-  return NextResponse.json(updated)
+  return NextResponse.json(settings.toJSON())
 }

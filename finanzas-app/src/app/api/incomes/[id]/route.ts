@@ -1,5 +1,6 @@
 import { auth } from '@/auth'
-import { getStore } from '@/lib/store'
+import { connectDB } from '@/lib/mongodb'
+import { IncomeModel } from '@/lib/models'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -8,21 +9,24 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params
   const body = await req.json()
-  const store = getStore()
+  await connectDB()
 
-  const idx = store.incomes.findIndex(i => i.id === id && i.userId === session.user.id)
-  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const income = await IncomeModel.findOneAndUpdate(
+    { _id: id, userId: session.user.id },
+    {
+      $set: {
+        description: body.description,
+        amount: Number(body.amount),
+        currency: body.currency === 'USD' ? 'USD' : 'ARS',
+        date: body.date,
+        notes: body.notes || '',
+      },
+    },
+    { new: true }
+  )
 
-  store.incomes[idx] = {
-    ...store.incomes[idx],
-    description: body.description,
-    amount: Number(body.amount),
-    currency: (body.currency === 'USD' ? 'USD' : body.currency === 'ARS' ? 'ARS' : store.incomes[idx].currency) as 'ARS' | 'USD',
-    date: body.date,
-    notes: body.notes || '',
-  }
-
-  return NextResponse.json(store.incomes[idx])
+  if (!income) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json(income.toJSON())
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -30,11 +34,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const store = getStore()
+  await connectDB()
 
-  const idx = store.incomes.findIndex(i => i.id === id && i.userId === session.user.id)
-  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
-  store.incomes.splice(idx, 1)
+  const income = await IncomeModel.findOneAndDelete({ _id: id, userId: session.user.id })
+  if (!income) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({ ok: true })
 }

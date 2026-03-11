@@ -1,9 +1,10 @@
 import { auth } from '@/auth'
-import { getStore } from '@/lib/store'
+import { connectDB } from '@/lib/mongodb'
+import { CategoryModel } from '@/lib/models'
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = new Anthropic({ apiKey: process.env.KEY_CLAUDE })
 
 const CATEGORY_COLORS = [
   '#4ade80', '#60a5fa', '#c084fc', '#f87171', '#f9a8d4',
@@ -17,10 +18,11 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const { messages } = body as { messages: { role: 'user' | 'assistant'; content: string }[] }
 
-  const store = getStore()
-  const categories = store.categories.filter(
-    c => c.userId === 'global' || c.userId === session.user.id
-  )
+  await connectDB()
+  const categoriesDocs = await CategoryModel.find({
+    $or: [{ userId: 'global' }, { userId: session.user.id }],
+  })
+  const categories = categoriesDocs.map(c => c.toJSON())
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -97,7 +99,6 @@ INSTRUCCIONES:
       }
     }
 
-    // If Claude only used tool_use without a text reply, add a default
     if (!replyText && parsedExpense) {
       replyText = `Anotado! Registré un gasto de ${parsedExpense.amount} ${parsedExpense.currency} en "${parsedExpense.description}" (${parsedExpense.categoryName}). ¿Lo confirmo?`
     }

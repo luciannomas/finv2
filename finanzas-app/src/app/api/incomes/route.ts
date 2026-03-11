@@ -1,38 +1,35 @@
 import { auth } from '@/auth'
-import { getStore } from '@/lib/store'
+import { connectDB } from '@/lib/mongodb'
+import { IncomeModel } from '@/lib/models'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const store = getStore()
+  await connectDB()
   const { searchParams } = new URL(req.url)
   const period = searchParams.get('period') || 'month'
 
   const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
-  let incomes = isAdmin
-    ? store.incomes
-    : store.incomes.filter(i => i.userId === session.user.id)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const filter: Record<string, any> = {}
+  if (!isAdmin) filter.userId = session.user.id
 
   const now = new Date()
-  const todayStr = now.toISOString().split('T')[0]
-
   if (period === 'day') {
-    incomes = incomes.filter(i => i.date === todayStr)
+    filter.date = now.toISOString().split('T')[0]
   } else if (period === 'week') {
     const weekAgo = new Date(now)
     weekAgo.setDate(weekAgo.getDate() - 7)
-    const weekAgoStr = weekAgo.toISOString().split('T')[0]
-    incomes = incomes.filter(i => i.date >= weekAgoStr)
+    filter.date = { $gte: weekAgo.toISOString().split('T')[0] }
   } else if (period === 'month') {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    const monthStartStr = monthStart.toISOString().split('T')[0]
-    incomes = incomes.filter(i => i.date >= monthStartStr)
+    filter.date = { $gte: monthStart.toISOString().split('T')[0] }
   }
-  // 'all' returns everything
 
-  return NextResponse.json(incomes.sort((a, b) => b.date.localeCompare(a.date)))
+  const incomes = await IncomeModel.find(filter).sort({ date: -1 })
+  return NextResponse.json(incomes.map(i => i.toJSON()))
 }
 
 export async function POST(req: NextRequest) {
@@ -40,19 +37,16 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const store = getStore()
+  await connectDB()
 
-  const newIncome = {
-    id: `inc-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+  const income = await IncomeModel.create({
     description: body.description,
     amount: Number(body.amount),
-    currency: (body.currency === 'USD' ? 'USD' : 'ARS') as 'ARS' | 'USD',
+    currency: body.currency === 'USD' ? 'USD' : 'ARS',
     userId: session.user.id,
     date: body.date,
-    createdAt: new Date().toISOString(),
     notes: body.notes || '',
-  }
+  })
 
-  store.incomes.push(newIncome)
-  return NextResponse.json(newIncome, { status: 201 })
+  return NextResponse.json(income.toJSON(), { status: 201 })
 }
