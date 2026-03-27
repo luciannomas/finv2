@@ -11,10 +11,16 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const period = searchParams.get('period') || 'month'
 
-  const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
+  const isSuperAdmin = session.user.role === 'superadmin'
+  const isAdmin = session.user.role === 'admin' || isSuperAdmin
+  const viewAs = isSuperAdmin ? searchParams.get('viewAs') : null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const filter: Record<string, any> = {}
-  if (!isAdmin) filter.userId = session.user.id
+  if (viewAs) {
+    filter.userId = viewAs
+  } else if (!isAdmin) {
+    filter.userId = session.user.id
+  }
 
   const now = new Date()
   const month = searchParams.get('month') // YYYY-MM

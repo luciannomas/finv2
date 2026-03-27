@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogTitle, DialogHeader, BottomSheet, DialogClose } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Expense, Category } from '@/lib/types'
+import { useViewAs } from '@/lib/view-as-context'
 
 type Period = 'day' | 'week' | 'month' | 'all'
 
@@ -24,6 +25,7 @@ interface ExpenseForm {
 
 export default function ExpensesPage() {
   const { format, currency: globalCurrency } = useCurrency()
+  const { viewAsId } = useViewAs()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [period, setPeriod] = useState<Period>('month')
@@ -34,17 +36,19 @@ export default function ExpensesPage() {
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
+  const vq = viewAsId ? `&viewAs=${viewAsId}` : ''
+
   useEffect(() => {
-    fetch('/api/categories').then(r => r.json()).then(d => setCategories(Array.isArray(d) ? d : []))
-  }, [])
+    fetch(`/api/categories${viewAsId ? `?viewAs=${viewAsId}` : ''}`).then(r => r.json()).then(d => setCategories(Array.isArray(d) ? d : []))
+  }, [viewAsId])
 
   useEffect(() => {
     loadExpenses()
-  }, [period])
+  }, [period, viewAsId])
 
   async function loadExpenses() {
     setLoading(true)
-    const res = await fetch(`/api/expenses?period=${period}`)
+    const res = await fetch(`/api/expenses?period=${period}${vq}`)
     const data = await res.json()
     setExpenses(Array.isArray(data) ? data : [])
     setLoading(false)

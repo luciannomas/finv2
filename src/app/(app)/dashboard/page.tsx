@@ -8,6 +8,7 @@ import { useCurrency } from '@/lib/currency'
 import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 import type { Expense, Category, Income } from '@/lib/types'
+import { useViewAs } from '@/lib/view-as-context'
 
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 const MONTH_NAMES_FULL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
@@ -39,22 +40,24 @@ export default function DashboardPage() {
   const monthScrollRef = useRef<HTMLDivElement>(null)
 
   const { format } = useCurrency()
+  const { viewAsId } = useViewAs()
   const firstName = session?.user?.name?.split(' ')[0] || 'Usuario'
   const months = getLast8Months()
+  const vq = viewAsId ? `&viewAs=${viewAsId}` : ''
 
   useEffect(() => {
-    fetch('/api/categories').then(r => r.json()).then(d => setCategories(Array.isArray(d) ? d : []))
-  }, [])
+    fetch(`/api/categories${viewAsId ? `?viewAs=${viewAsId}` : ''}`).then(r => r.json()).then(d => setCategories(Array.isArray(d) ? d : []))
+  }, [viewAsId])
 
   useEffect(() => {
     setLoading(true)
     let expUrl: string, incUrl: string
     if (quickPeriod) {
-      expUrl = `/api/expenses?period=${quickPeriod}`
-      incUrl = `/api/incomes?period=${quickPeriod}`
+      expUrl = `/api/expenses?period=${quickPeriod}${vq}`
+      incUrl = `/api/incomes?period=${quickPeriod}${vq}`
     } else {
-      expUrl = `/api/expenses?month=${selectedMonth}`
-      incUrl = `/api/incomes?month=${selectedMonth}`
+      expUrl = `/api/expenses?month=${selectedMonth}${vq}`
+      incUrl = `/api/incomes?month=${selectedMonth}${vq}`
     }
     Promise.all([
       fetch(expUrl).then(r => r.json()),
@@ -64,7 +67,7 @@ export default function DashboardPage() {
       setIncomes(Array.isArray(incData) ? incData : [])
       setLoading(false)
     })
-  }, [quickPeriod, selectedMonth])
+  }, [quickPeriod, selectedMonth, viewAsId])
 
   const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0)
   const totalIncome = incomes.reduce((sum, i) => sum + i.amount, 0)

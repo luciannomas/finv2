@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Trash2, Loader2, Users, X, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, Users, X, Eye, EyeOff, ScanEye } from 'lucide-react'
+import { useViewAs } from '@/lib/view-as-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -42,6 +43,7 @@ export default function AdminPage() {
   const [showPass, setShowPass] = useState(false)
 
   const isSuperAdmin = session?.user?.role === 'superadmin'
+  const { viewAsId, setViewAs, clearViewAs } = useViewAs()
 
   useEffect(() => {
     const role = session?.user?.role
@@ -190,6 +192,19 @@ export default function AdminPage() {
                   <div className="mt-1">{roleBadge(user.role)}</div>
                 </div>
                 <div className="flex gap-1.5 flex-shrink-0">
+                  {isSuperAdmin && !isSelf && user.email !== 'lucho@app.com' && (
+                    <button
+                      onClick={() => viewAsId === user.id ? clearViewAs() : setViewAs(user.id, user.name)}
+                      className={`p-2 rounded-xl transition-colors ${
+                        viewAsId === user.id
+                          ? 'text-amber-400 bg-amber-500/15'
+                          : 'text-slate-500 hover:text-amber-400 hover:bg-amber-500/10'
+                      }`}
+                      title="Ver como este usuario"
+                    >
+                      <ScanEye size={14} />
+                    </button>
+                  )}
                   <button
                     onClick={() => openEdit(user)}
                     className="p-2 text-slate-500 hover:text-slate-200 hover:bg-slate-800 rounded-xl transition-colors"

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, BottomSheet, DialogClose } from '@/components/ui/dialog'
 import type { Income } from '@/lib/types'
+import { useViewAs } from '@/lib/view-as-context'
 
 type Period = 'day' | 'week' | 'month' | 'all'
 
@@ -22,6 +23,7 @@ interface IncomeForm {
 
 export default function IncomesPage() {
   const { format, currency: globalCurrency } = useCurrency()
+  const { viewAsId } = useViewAs()
   const [incomes, setIncomes] = useState<Income[]>([])
   const [period, setPeriod] = useState<Period>('month')
   const [loading, setLoading] = useState(true)
@@ -32,13 +34,15 @@ export default function IncomesPage() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
+  const vq = viewAsId ? `&viewAs=${viewAsId}` : ''
+
   useEffect(() => {
     loadIncomes()
-  }, [period])
+  }, [period, viewAsId])
 
   async function loadIncomes() {
     setLoading(true)
-    const res = await fetch(`/api/incomes?period=${period}`)
+    const res = await fetch(`/api/incomes?period=${period}${vq}`)
     const data = await res.json()
     setIncomes(Array.isArray(data) ? data : [])
     setLoading(false)

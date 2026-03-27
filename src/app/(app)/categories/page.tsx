@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { formatDate, today } from '@/lib/utils'
 import { useCurrency } from '@/lib/currency'
 import type { Category, Expense } from '@/lib/types'
+import { useViewAs } from '@/lib/view-as-context'
 
 const ALIMENTOS_GROUP = ['Mica', 'Pibes', 'Familia']
 
@@ -40,6 +41,7 @@ const emptyExpenseForm = (categoryId = ''): ExpenseForm => ({
 
 export default function CategoriesPage() {
   const { format } = useCurrency()
+  const { viewAsId } = useViewAs()
   const [categories, setCategories] = useState<Category[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
@@ -62,13 +64,15 @@ export default function CategoriesPage() {
   const [savingExpense, setSavingExpense] = useState(false)
   const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null)
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => { loadData() }, [viewAsId])
 
   async function loadData() {
     setLoading(true)
+    const vq = viewAsId ? `?viewAs=${viewAsId}` : ''
+    const vqAmp = viewAsId ? `&viewAs=${viewAsId}` : ''
     const [catsRes, expRes] = await Promise.all([
-      fetch('/api/categories'),
-      fetch('/api/expenses?period=all'),
+      fetch(`/api/categories${vq}`),
+      fetch(`/api/expenses?period=all${vqAmp}`),
     ])
     setCategories(await catsRes.json())
     setExpenses(await expRes.json())
