@@ -170,12 +170,12 @@ export default function DashboardPage() {
 
       {/* Main balance card */}
       <div className="gradient-violet rounded-3xl p-5 mb-4 shadow-xl shadow-violet-900/30">
-        <p className="text-violet-200 text-sm mb-1">Balance {periodLabel}</p>
-        <p className={`text-4xl font-bold mb-1 ${balance >= 0 ? 'text-white' : 'text-rose-300'}`}>
-          {loading ? '...' : (balance >= 0 ? '+' : '') + format(balance)}
+        <p className="text-violet-200 text-sm mb-1">Gastos {periodLabel}</p>
+        <p className="text-4xl font-bold mb-1 text-white">
+          {loading ? '...' : format(totalSpent)}
         </p>
         <p className="text-violet-300 text-xs">
-          {loading ? '' : `${format(totalIncome)} ingresos · ${format(totalSpent)} gastos`}
+          {loading ? '' : `${expenses.length} movimiento${expenses.length !== 1 ? 's' : ''}`}
         </p>
       </div>
 
