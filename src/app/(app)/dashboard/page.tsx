@@ -230,6 +230,11 @@ export default function DashboardPage() {
         </Card>
       )}
 
+      {/* Donut chart */}
+      {!loading && expenses.length > 0 && (
+        <DonutChart categories={categories} expenses={expenses} format={format} />
+      )}
+
       {/* Weekly bar chart — solo en modo mes */}
       {quickPeriod === null && expenses.length > 0 && (
         <Card className="mb-5">
@@ -282,6 +287,108 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  )
+}
+
+const ALIMENTOS_CATS = ['Mica', 'Pibes', 'Familia']
+const ALIMENTOS_COLOR = '#4ade80'
+
+function DonutChart({
+  categories, expenses, format,
+}: {
+  categories: Category[]
+  expenses: Expense[]
+  format: (n: number) => string
+}) {
+  const [groupAlimentos, setGroupAlimentos] = useState(true)
+  const [hidden, setHidden] = useState<Set<string>>(new Set())
+
+  const catTotals = categories
+    .map(c => ({ ...c, total: expenses.filter(e => e.categoryId === c.id).reduce((s, e) => s + e.amount, 0) }))
+    .filter(c => c.total > 0)
+
+  const alimentosCats = catTotals.filter(c => ALIMENTOS_CATS.includes(c.name))
+  const otherCats = catTotals.filter(c => !ALIMENTOS_CATS.includes(c.name))
+  const alimentosTotal = alimentosCats.reduce((s, c) => s + c.total, 0)
+
+  const chartData = groupAlimentos
+    ? [...(alimentosTotal > 0 ? [{ id: 'alimentos', name: 'Alimentos', color: ALIMENTOS_COLOR, total: alimentosTotal }] : []), ...otherCats]
+    : catTotals
+
+  const visibleData = chartData.filter(d => !hidden.has(d.id))
+  const total = visibleData.reduce((s, d) => s + d.total, 0)
+
+  const R = 52, sw = 22, cx = 75, cy = 75
+  const circ = 2 * Math.PI * R
+  let offset = 0
+  const segments = visibleData.map(d => {
+    const pct = total > 0 ? d.total / total : 0
+    const seg = { ...d, dash: pct * circ, gap: circ - pct * circ, rotation: offset * 360 - 90 }
+    offset += pct
+    return seg
+  })
+
+  const toggle = (id: string) => setHidden(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
+
+  return (
+    <Card className="mb-5">
+      <CardContent className="pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-white font-bold">Distribución</h2>
+          <button
+            onClick={() => setGroupAlimentos(g => !g)}
+            className={`text-xs px-2.5 py-1 rounded-full transition-colors ${groupAlimentos ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-400'}`}
+          >
+            Agrupar Alimentos
+          </button>
+        </div>
+
+        {visibleData.length === 0 ? (
+          <p className="text-slate-500 text-sm text-center py-4">Sin datos para mostrar</p>
+        ) : (
+          <div className="flex items-center gap-3">
+            {/* Donut SVG */}
+            <div className="flex-shrink-0">
+              <svg width="150" height="150" viewBox="0 0 150 150">
+                <circle cx={cx} cy={cy} r={R} fill="none" stroke="#1e293b" strokeWidth={sw} />
+                {segments.map((seg, i) => (
+                  <circle key={i} cx={cx} cy={cy} r={R} fill="none"
+                    stroke={seg.color} strokeWidth={sw}
+                    strokeDasharray={`${seg.dash} ${seg.gap}`}
+                    transform={`rotate(${seg.rotation} ${cx} ${cy})`}
+                  />
+                ))}
+                <text x={cx} y={cy - 5} textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">Total</text>
+                <text x={cx} y={cy + 10} textAnchor="middle" fill="#94a3b8" fontSize="9">
+                  {format(total).replace('$', '').trim()}
+                </text>
+              </svg>
+            </div>
+
+            {/* Legend con toggles */}
+            <div className="flex flex-col gap-2 flex-1 min-w-0">
+              {chartData.map(d => {
+                const isHidden = hidden.has(d.id)
+                const pct = total > 0 ? Math.round((visibleData.find(v => v.id === d.id)?.total || 0) / total * 100) : 0
+                return (
+                  <button key={d.id} onClick={() => toggle(d.id)}
+                    className={`flex items-center gap-2 text-left transition-opacity ${isHidden ? 'opacity-35' : ''}`}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
+                    <span className="text-slate-300 text-xs truncate flex-1">{d.name}</span>
+                    <span className="text-slate-500 text-xs flex-shrink-0">{isHidden ? '—' : `${pct}%`}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
