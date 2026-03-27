@@ -11,7 +11,7 @@ import { formatDate, today } from '@/lib/utils'
 import { useCurrency } from '@/lib/currency'
 import type { Category, Expense } from '@/lib/types'
 
-const ALIMENTOS_GROUP = ['Mica', 'Pibes y Familia', 'Familia']
+const ALIMENTOS_GROUP = ['Mica', 'Pibes', 'Familia']
 
 const COLORS = [
   '#4ade80', '#60a5fa', '#c084fc', '#f87171', '#f9a8d4',
