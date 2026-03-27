@@ -73,8 +73,9 @@ export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHe
 export function BottomSheet({
   className,
   children,
+  showClose = false,
   ...props
-}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>) {
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { showClose?: boolean }) {
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -92,9 +93,11 @@ export function BottomSheet({
           <div className="w-10 h-1 bg-slate-700 rounded-full" />
         </div>
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors">
-          <X size={18} />
-        </DialogPrimitive.Close>
+        {showClose && (
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors">
+            <X size={18} />
+          </DialogPrimitive.Close>
+        )}
       </DialogPrimitive.Content>
     </DialogPortal>
   )
