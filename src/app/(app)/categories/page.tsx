@@ -11,6 +11,8 @@ import { formatDate, today } from '@/lib/utils'
 import { useCurrency } from '@/lib/currency'
 import type { Category, Expense } from '@/lib/types'
 
+const ALIMENTOS_GROUP = ['Familia', 'Pibes', 'Super', 'Mica']
+
 const COLORS = [
   '#4ade80', '#60a5fa', '#c084fc', '#f87171', '#f9a8d4',
   '#fbbf24', '#fb923c', '#94a3b8', '#34d399', '#f472b6',
@@ -215,17 +217,20 @@ export default function CategoriesPage() {
             <Plus size={16} className="mr-1" /> Crear categoría
           </Button>
         </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {categories.map(cat => {
-            const total = getCatTotal(cat.id)
-            const count = getCatExpenses(cat.id).length
-            return (
-              <div
-                key={cat.id}
-                className="bg-slate-900 border border-slate-800 rounded-2xl p-4 relative overflow-hidden cursor-pointer active:scale-95 transition-transform"
-                onClick={() => openDetail(cat)}
-              >
+      ) : (() => {
+        const alimentosCats = categories.filter(c => ALIMENTOS_GROUP.includes(c.name))
+        const otherCats = categories.filter(c => !ALIMENTOS_GROUP.includes(c.name))
+        const alimentosTotal = alimentosCats.reduce((s, c) => s + getCatTotal(c.id), 0)
+
+        const renderCatCard = (cat: Category) => {
+          const total = getCatTotal(cat.id)
+          const count = getCatExpenses(cat.id).length
+          return (
+            <div
+              key={cat.id}
+              className="bg-slate-900 border border-slate-800 rounded-2xl p-4 relative overflow-hidden cursor-pointer active:scale-95 transition-transform"
+              onClick={() => openDetail(cat)}
+            >
                 {/* Color accent bar */}
                 <div
                   className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
@@ -268,9 +273,40 @@ export default function CategoriesPage() {
                 </p>
               </div>
             )
-          })}
-        </div>
-      )}
+        }
+
+        return (
+          <div className="flex flex-col gap-5">
+            {alimentosCats.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-5 rounded-full bg-emerald-500" />
+                    <h2 className="text-white font-bold text-base">Alimentos</h2>
+                  </div>
+                  <span className="text-rose-400 text-sm font-semibold">{alimentosTotal > 0 ? format(alimentosTotal) : '—'}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {alimentosCats.map(renderCatCard)}
+                </div>
+              </div>
+            )}
+            {otherCats.length > 0 && (
+              <div>
+                {alimentosCats.length > 0 && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-5 rounded-full bg-slate-500" />
+                    <h2 className="text-white font-bold text-base">Otras</h2>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  {otherCats.map(renderCatCard)}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Category detail bottom sheet */}
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
