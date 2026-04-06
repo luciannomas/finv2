@@ -39,12 +39,21 @@ const emptyExpenseForm = (categoryId = ''): ExpenseForm => ({
   description: '', amount: '', categoryId, date: today(), notes: '',
 })
 
+type Period = 'week' | 'month' | 'all'
+
+const PERIOD_OPTIONS: { value: Period; label: string }[] = [
+  { value: 'week', label: 'Semana' },
+  { value: 'month', label: 'Mes' },
+  { value: 'all', label: 'Todo' },
+]
+
 export default function CategoriesPage() {
   const { format } = useCurrency()
   const { viewAsId } = useViewAs()
   const [categories, setCategories] = useState<Category[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState<Period>('month')
 
   // Category form
   const [showForm, setShowForm] = useState(false)
@@ -64,7 +73,7 @@ export default function CategoriesPage() {
   const [savingExpense, setSavingExpense] = useState(false)
   const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null)
 
-  useEffect(() => { loadData() }, [viewAsId])
+  useEffect(() => { loadData() }, [viewAsId, period])
 
   async function loadData() {
     setLoading(true)
@@ -72,7 +81,7 @@ export default function CategoriesPage() {
     const vqAmp = viewAsId ? `&viewAs=${viewAsId}` : ''
     const [catsRes, expRes] = await Promise.all([
       fetch(`/api/categories${vq}`),
-      fetch(`/api/expenses?period=all${vqAmp}`),
+      fetch(`/api/expenses?period=${period}${vqAmp}`),
     ])
     setCategories(await catsRes.json())
     setExpenses(await expRes.json())
@@ -197,7 +206,7 @@ export default function CategoriesPage() {
   return (
     <div className="px-4 pt-12 pb-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Categorías</h1>
           <p className="text-slate-400 text-sm">{categories.length} categorías</p>
@@ -205,6 +214,23 @@ export default function CategoriesPage() {
         <Button size="icon" onClick={openCreate} className="w-11 h-11 rounded-2xl">
           <Plus size={20} />
         </Button>
+      </div>
+
+      {/* Period filter */}
+      <div className="flex gap-2 mb-5">
+        {PERIOD_OPTIONS.map(opt => (
+          <button
+            key={opt.value}
+            onClick={() => setPeriod(opt.value)}
+            className={`flex-1 py-1.5 rounded-xl text-sm font-semibold transition-colors ${
+              period === opt.value
+                ? 'bg-violet-600 text-white'
+                : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
