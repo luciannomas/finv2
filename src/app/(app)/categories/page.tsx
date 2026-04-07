@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, X, Loader2, LayoutGrid, ChevronRight, Receipt } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, LayoutGrid, ChevronRight, ChevronLeft, Receipt } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -47,6 +47,27 @@ const PERIOD_OPTIONS: { value: Period; label: string }[] = [
   { value: 'all', label: 'Todo' },
 ]
 
+const MONTH_NAMES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+]
+
+function currentYearMonth(): string {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+}
+
+function offsetMonth(ym: string, delta: number): string {
+  const [y, m] = ym.split('-').map(Number)
+  const date = new Date(y, m - 1 + delta, 1)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+function formatYearMonth(ym: string): string {
+  const [y, m] = ym.split('-').map(Number)
+  return `${MONTH_NAMES[m - 1]} ${y}`
+}
+
 export default function CategoriesPage() {
   const { format } = useCurrency()
   const { viewAsId } = useViewAs()
@@ -54,6 +75,7 @@ export default function CategoriesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('month')
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentYearMonth())
 
   // Category form
   const [showForm, setShowForm] = useState(false)
@@ -73,15 +95,18 @@ export default function CategoriesPage() {
   const [savingExpense, setSavingExpense] = useState(false)
   const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null)
 
-  useEffect(() => { loadData() }, [viewAsId, period])
+  useEffect(() => { loadData() }, [viewAsId, period, selectedMonth])
 
   async function loadData() {
     setLoading(true)
     const vq = viewAsId ? `?viewAs=${viewAsId}` : ''
     const vqAmp = viewAsId ? `&viewAs=${viewAsId}` : ''
+    const expQuery = period === 'month'
+      ? `month=${selectedMonth}${vqAmp}`
+      : `period=${period}${vqAmp}`
     const [catsRes, expRes] = await Promise.all([
       fetch(`/api/categories${vq}`),
-      fetch(`/api/expenses?period=${period}${vqAmp}`),
+      fetch(`/api/expenses?${expQuery}`),
     ])
     setCategories(await catsRes.json())
     setExpenses(await expRes.json())
@@ -217,7 +242,7 @@ export default function CategoriesPage() {
       </div>
 
       {/* Period filter */}
-      <div className="flex gap-2 mb-5">
+      <div className="flex gap-2 mb-3">
         {PERIOD_OPTIONS.map(opt => (
           <button
             key={opt.value}
@@ -232,6 +257,26 @@ export default function CategoriesPage() {
           </button>
         ))}
       </div>
+
+      {/* Month navigator */}
+      {period === 'month' && (
+        <div className="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 mb-5">
+          <button
+            onClick={() => setSelectedMonth(m => offsetMonth(m, -1))}
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className="text-white text-sm font-semibold">{formatYearMonth(selectedMonth)}</span>
+          <button
+            onClick={() => setSelectedMonth(m => offsetMonth(m, 1))}
+            disabled={selectedMonth >= currentYearMonth()}
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-2 gap-3">
