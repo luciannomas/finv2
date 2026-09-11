@@ -1,20 +1,25 @@
+import { auth } from '@/auth'
 import { connectDB } from '@/lib/mongodb'
 import { CategoryModel, ExpenseModel } from '@/lib/models'
 import { NextRequest, NextResponse } from 'next/server'
 
-// POST /api/recover-category (temporarily public)
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const body = await req.json()
   const { name = 'Préstamos', color = '#60a5fa' } = body
 
   await connectDB()
 
-  // Get all existing category IDs
   const existingCategories = await CategoryModel.find({})
   const existingIds = new Set(existingCategories.map(c => String(c._id)))
 
-  // Find all expenses with orphaned categoryIds
-  const allExpenses = await ExpenseModel.find({})
+  const isSuperAdmin = session.user.role === 'superadmin'
+  const isAdmin = session.user.role === 'admin' || isSuperAdmin
+  const userFilter = isAdmin ? {} : { userId: session.user.id }
+
+  const allExpenses = await ExpenseModel.find(userFilter)
   const orphanedExpenses = allExpenses.filter(e => !existingIds.has(String(e.categoryId)))
 
   if (orphanedExpenses.length === 0) {
@@ -31,12 +36,11 @@ export async function POST(req: NextRequest) {
     byOldCatId[key] = (byOldCatId[key] || 0) + 1
   }
 
-  // Create the recovered category as global
   const recovered = await CategoryModel.create({
     name,
     color,
     icon: 'circle-ellipsis',
-    userId: 'global',
+    userId: isAdmin ? 'global' : session.user.id,
   })
 
   // Relink all orphaned expenses to the new category

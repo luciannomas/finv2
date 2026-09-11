@@ -11,9 +11,8 @@ export default auth((req) => {
   const isLoginPage = nextUrl.pathname === '/login'
   const isApiAuth = nextUrl.pathname.startsWith('/api/auth')
   const isSeedRoute = nextUrl.pathname === '/api/seed'
-  const isRecoverRoute = nextUrl.pathname === '/api/recover-category'
 
-  if (isApiAuth || isSeedRoute || isRecoverRoute) return NextResponse.next()
+  if (isApiAuth || isSeedRoute) return NextResponse.next()
 
   if (!isAuthenticated && !isLoginPage) {
     return NextResponse.redirect(new URL('/login', nextUrl))
