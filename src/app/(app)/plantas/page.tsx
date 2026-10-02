@@ -11,7 +11,7 @@ import { today } from '@/lib/utils'
 import type { Plant } from '@/lib/types'
 import { useViewAs } from '@/lib/view-as-context'
 
-const ESTATUS_OPTIONS = ['chica', 'en vegetación', 'en flor', 'cosechada']
+const ESTATUS_OPTIONS = ['chica', 'en vegetación', 'en flor', 'mal estado', 'cosechada']
 const TIPO_OPTIONS = [
   { value: 'auto', label: 'Automática' },
   { value: 'fem', label: 'Feminizada' },
@@ -61,6 +61,7 @@ function estatusColor(estatus: string): string {
     'chica': 'bg-sky-500/20 text-sky-400',
     'en vegetación': 'bg-emerald-500/20 text-emerald-400',
     'en flor': 'bg-violet-500/20 text-violet-400',
+    'mal estado': 'bg-rose-500/20 text-rose-400',
     'cosechada': 'bg-amber-500/20 text-amber-400',
   }
   return map[estatus] || 'bg-slate-700 text-slate-400'
