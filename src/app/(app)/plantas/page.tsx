@@ -113,6 +113,8 @@ export default function PlantasPage() {
   const [showHarvest, setShowHarvest] = useState(false)
   const [harvestForm, setHarvestForm] = useState({ fecha: today(), gramos: '' })
   const [savingHarvest, setSavingHarvest] = useState(false)
+  const [showRevertConfirm, setShowRevertConfirm] = useState(false)
+  const [revertingHarvest, setRevertingHarvest] = useState(false)
 
   useEffect(() => { loadData() }, [viewAsId])
 
@@ -217,6 +219,7 @@ export default function PlantasPage() {
 
   async function handleRevertHarvest() {
     if (!selectedPlant) return
+    setRevertingHarvest(true)
     const res = await fetch(`/api/plantas/${selectedPlant.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -225,6 +228,8 @@ export default function PlantasPage() {
     const updated = await res.json()
     setPlants(prev => prev.map(p => p.id === selectedPlant.id ? updated : p))
     setSelectedPlant(updated)
+    setRevertingHarvest(false)
+    setShowRevertConfirm(false)
   }
 
   async function handleDelete(id: string) {
@@ -526,7 +531,7 @@ export default function PlantasPage() {
                           )}
                         </div>
                         <button
-                          onClick={handleRevertHarvest}
+                          onClick={() => setShowRevertConfirm(true)}
                           className="w-full text-xs text-slate-500 hover:text-slate-300 py-2 transition-colors"
                         >
                           ↩ Revertir cosecha
@@ -648,6 +653,44 @@ export default function PlantasPage() {
                   ? <><Loader2 size={16} className="mr-2 animate-spin" />Guardando...</>
                   : editingPlant ? 'Guardar cambios' : 'Agregar planta'}
               </Button>
+            </div>
+          </div>
+        </BottomSheet>
+      </Dialog>
+
+      {/* Confirmar revertir cosecha */}
+      <Dialog open={showRevertConfirm} onOpenChange={setShowRevertConfirm}>
+        <BottomSheet>
+          <div className="px-5 pb-8 pt-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white">¿Revertir cosecha?</h2>
+              <DialogClose asChild>
+                <button className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                  <X size={18} />
+                </button>
+              </DialogClose>
+            </div>
+            <p className="text-slate-400 text-sm mb-1">
+              #{selectedPlant?.numero} · {selectedPlant?.raza}
+            </p>
+            <p className="text-slate-500 text-xs mb-6">
+              Se va a borrar la fecha de cosecha y los gramos registrados. El estatus vuelve a <span className="text-violet-400">en flor</span>.
+            </p>
+            <div className="flex gap-3">
+              <DialogClose asChild>
+                <button className="flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 text-sm font-semibold hover:bg-slate-700 transition-colors">
+                  Cancelar
+                </button>
+              </DialogClose>
+              <button
+                onClick={handleRevertHarvest}
+                disabled={revertingHarvest}
+                className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {revertingHarvest
+                  ? <><Loader2 size={14} className="animate-spin" /> Revirtiendo...</>
+                  : '↩ Sí, revertir'}
+              </button>
             </div>
           </div>
         </BottomSheet>
