@@ -25,10 +25,12 @@ export async function POST(req: NextRequest) {
 
   await connectDB()
 
-  // Avoid duplicate seed
   const existing = await PlantModel.countDocuments({ userId })
-  if (existing > 0) {
-    return NextResponse.json({ error: `Ya existen ${existing} plantas para este usuario. Borralas primero.` }, { status: 409 })
+  if (existing > 0 && !body.reset) {
+    return NextResponse.json({ error: `Ya existen ${existing} plantas. Pasá reset:true para borrar y re-sembrar.` }, { status: 409 })
+  }
+  if (body.reset) {
+    await PlantModel.deleteMany({ userId })
   }
 
   const plants = await PlantModel.insertMany(
