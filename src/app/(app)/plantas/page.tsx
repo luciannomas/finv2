@@ -205,7 +205,6 @@ export default function PlantasPage() {
       body: JSON.stringify({
         cosecha: harvestForm.fecha,
         gramos: Number(harvestForm.gramos),
-        estatus: 'cosechada',
       }),
     })
     const updated = await res.json()
@@ -221,7 +220,11 @@ export default function PlantasPage() {
     const res = await fetch(`/api/plantas/${selectedPlant.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cosecha: null, gramos: null, estatus: 'chica' }),
+      body: JSON.stringify({
+        cosecha: null,
+        gramos: null,
+        ...(selectedPlant.estatus === 'cosechada' ? { estatus: 'chica' } : {}),
+      }),
     })
     const updated = await res.json()
     setPlants(prev => prev.map(p => p.id === selectedPlant.id ? updated : p))
@@ -342,7 +345,10 @@ export default function PlantasPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-white font-bold text-sm truncate">{plant.raza}</p>
-                    {cosechada && <span className="text-amber-400 text-xs">🌾</span>}
+                    {cosechada
+                      ? <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 shrink-0">🌾 cosechada</span>
+                      : <span className="text-xs px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">🌱 proceso</span>
+                    }
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     {cosechada ? (
@@ -380,6 +386,7 @@ export default function PlantasPage() {
             <thead>
               <tr className="border-b border-slate-800">
                 <th className="text-left text-slate-400 text-xs font-semibold px-4 py-3">#</th>
+                <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Estado</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Raza</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Inicio</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Días</th>
@@ -401,6 +408,12 @@ export default function PlantasPage() {
                   >
                     <td className="px-4 py-3">
                       <span className="text-emerald-400 font-black">#{plant.numero}</span>
+                    </td>
+                    <td className="px-3 py-3">
+                      {plant.cosecha
+                        ? <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-400">🌾 cosechada</span>
+                        : <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-500/20 text-emerald-400">🌱 proceso</span>
+                      }
                     </td>
                     <td className="px-3 py-3">
                       <p className="text-white font-semibold">{plant.raza}</p>
