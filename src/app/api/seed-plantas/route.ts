@@ -1,3 +1,4 @@
+import { auth } from '@/auth'
 import { connectDB } from '@/lib/mongodb'
 import { PlantModel } from '@/lib/models'
 import { NextRequest, NextResponse } from 'next/server'
@@ -14,12 +15,13 @@ const SEED_DATA = [
   { numero: 9, raza: 'Gorilla',       banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 10, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
 ]
 
-// POST /api/seed-plantas  — temporarily public, pass { userId } in body
+// POST /api/seed-plantas — public, uses session userId or body userId
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { userId } = body
+  const session = await auth()
+  const body = await req.json().catch(() => ({}))
+  const userId = session?.user?.id || body.userId
 
-  if (!userId) return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
+  if (!userId) return NextResponse.json({ error: 'userId requerido o iniciá sesión' }, { status: 400 })
 
   await connectDB()
 
