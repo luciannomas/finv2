@@ -76,6 +76,7 @@ export interface Plant {
   productos: string[]
   estatus: string // chica | en vegetación | en flor | cosechada
   cultivo: 'indoor' | 'outdoor'
+  feno?: string
   cosecha?: string // YYYY-MM-DD
   gramos?: number
   userId: string

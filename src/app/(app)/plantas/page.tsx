@@ -34,12 +34,13 @@ interface PlantForm {
   productos: string
   estatus: string
   cultivo: 'indoor' | 'outdoor'
+  feno: string
   cosecha: string
 }
 
 const emptyForm = (): PlantForm => ({
   raza: '', banco: '', inicio: today(), tipo: 'auto',
-  maceta: '', productos: '', estatus: 'chica', cultivo: 'indoor', cosecha: '',
+  maceta: '', productos: '', estatus: 'chica', cultivo: 'indoor', feno: '', cosecha: '',
 })
 
 function diasDesde(dateStr: string): number {
@@ -151,7 +152,7 @@ export default function PlantasPage() {
       raza: plant.raza, banco: plant.banco, inicio: plant.inicio,
       tipo: plant.tipo, maceta: String(plant.maceta),
       productos: plant.productos.join(', '), estatus: plant.estatus,
-      cultivo: plant.cultivo, cosecha: plant.cosecha || '',
+      cultivo: plant.cultivo, feno: plant.feno || '', cosecha: plant.cosecha || '',
     })
     setShowForm(true)
     setShowDetail(false)
@@ -169,7 +170,9 @@ export default function PlantasPage() {
       raza: form.raza, banco: form.banco, inicio: form.inicio,
       tipo: form.tipo, maceta: Number(form.maceta),
       productos: form.productos ? form.productos.split(',').map(p => p.trim()).filter(Boolean) : [],
-      estatus: form.estatus, cultivo: form.cultivo, cosecha: form.cosecha || null,
+      estatus: form.estatus, cultivo: form.cultivo,
+      feno: form.tipo === 'fem' && form.feno ? form.feno : null,
+      cosecha: form.cosecha || null,
     }
     if (editingPlant) {
       const res = await fetch(`/api/plantas/${editingPlant.id}`, {
@@ -333,14 +336,17 @@ export default function PlantasPage() {
                     : 'bg-slate-900 border-slate-800'
                 }`}
               >
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 flex-col ${
                   cosechada
                     ? 'bg-amber-500/20 border border-amber-500/40'
                     : 'bg-emerald-500/15 border border-emerald-500/30'
                 }`}>
-                  <span className={`font-black text-lg ${cosechada ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  <span className={`font-black text-lg leading-none ${cosechada ? 'text-amber-400' : 'text-emerald-400'}`}>
                     #{plant.numero}
                   </span>
+                  {plant.feno && (
+                    <span className="text-[9px] font-semibold text-pink-400 leading-none mt-0.5">{plant.feno}</span>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -408,6 +414,9 @@ export default function PlantasPage() {
                   >
                     <td className="px-4 py-3">
                       <span className="text-emerald-400 font-black">#{plant.numero}</span>
+                      {plant.feno && (
+                        <p className="text-pink-400 text-[10px] font-semibold leading-none mt-0.5">{plant.feno}</p>
+                      )}
                     </td>
                     <td className="px-3 py-3">
                       {plant.cosecha
@@ -467,12 +476,15 @@ export default function PlantasPage() {
           <div className="px-5 pb-8 pt-2 max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between mb-5 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-                  <span className="text-emerald-400 font-black text-lg">#{detail?.numero}</span>
+                <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center flex-col">
+                  <span className="text-emerald-400 font-black text-lg leading-none">#{detail?.numero}</span>
+                  {detail?.feno && (
+                    <span className="text-[9px] font-semibold text-pink-400 leading-none mt-0.5">{detail.feno}</span>
+                  )}
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-white">{detail?.raza}</h2>
-                  <p className="text-slate-400 text-xs">{detail?.banco}</p>
+                  <p className="text-slate-400 text-xs">{detail?.banco}{detail?.feno ? ` · Feno ${detail.feno}` : ''}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -651,6 +663,13 @@ export default function PlantasPage() {
                   </Select>
                 </div>
               </div>
+              {form.tipo === 'fem' && (
+                <div>
+                  <Label className="mb-1.5 block">Fenotipo</Label>
+                  <Input placeholder="Ej: A, B, F1, F2..." value={form.feno}
+                    onChange={e => setForm(p => ({ ...p, feno: e.target.value }))} />
+                </div>
+              )}
               <div>
                 <Label className="mb-1.5 block">Inicio</Label>
                 <Input type="date" value={form.inicio}

@@ -90,6 +90,7 @@ const PlantSchema = new Schema(
     productos: { type: [String], default: [] },
     estatus: { type: String, enum: ['chica', 'mediana', 'grande'], default: 'chica' },
     cultivo: { type: String, enum: ['indoor', 'outdoor'], default: 'indoor' },
+    feno: { type: String, default: null },
     cosecha: { type: String, default: null },
     gramos: { type: Number, default: null },
     userId: { type: String, required: true },
