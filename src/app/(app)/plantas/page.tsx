@@ -347,15 +347,15 @@ export default function PlantasPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     {cosechada ? (
                       <>
-                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-400">
-                          {diasTotales}d
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tamanoColor(plant.estatus)}`}>
+                          {plant.estatus}
                         </span>
                         {plant.gramos != null && (
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-300 font-bold">
                             {plant.gramos}g
                           </span>
                         )}
-                        <span className="text-slate-500 text-xs">{plant.maceta}L</span>
+                        <span className="text-slate-500 text-xs">{diasTotales}d · {plant.maceta}L</span>
                       </>
                     ) : (
                       <>
@@ -383,6 +383,7 @@ export default function PlantasPage() {
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Raza</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Inicio</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Días</th>
+                <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">g</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Cosecha est.</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Tipo</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Maceta</th>
@@ -407,6 +408,12 @@ export default function PlantasPage() {
                     </td>
                     <td className="px-3 py-3 text-slate-300">{formatFecha(plant.inicio)}</td>
                     <td className="px-3 py-3 text-slate-300 font-medium">{dias}d</td>
+                    <td className="px-3 py-3">
+                      {plant.gramos != null
+                        ? <span className="text-amber-300 text-xs font-bold">{plant.gramos}g</span>
+                        : <span className="text-slate-700 text-xs">—</span>
+                      }
+                    </td>
                     <td className="px-3 py-3">
                       {plant.cosecha ? (
                         <div className="text-xs">
