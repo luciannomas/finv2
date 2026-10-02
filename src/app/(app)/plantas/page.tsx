@@ -11,7 +11,7 @@ import { today } from '@/lib/utils'
 import type { Plant } from '@/lib/types'
 import { useViewAs } from '@/lib/view-as-context'
 
-const ESTATUS_OPTIONS = ['chica', 'en vegetación', 'en flor', 'mal estado', 'cosechada']
+const TAMANO_OPTIONS = ['chica', 'mediana', 'grande']
 const TIPO_OPTIONS = [
   { value: 'auto', label: 'Automática' },
   { value: 'fem', label: 'Feminizada' },
@@ -65,15 +65,13 @@ function diasHastaCosecha(plant: Plant): number {
   return AUTO_MIN - dias
 }
 
-function estatusColor(estatus: string): string {
+function tamanoColor(tamano: string): string {
   const map: Record<string, string> = {
     'chica': 'bg-sky-500/20 text-sky-400',
-    'en vegetación': 'bg-emerald-500/20 text-emerald-400',
-    'en flor': 'bg-violet-500/20 text-violet-400',
-    'mal estado': 'bg-rose-500/20 text-rose-400',
-    'cosechada': 'bg-amber-500/20 text-amber-400',
+    'mediana': 'bg-emerald-500/20 text-emerald-400',
+    'grande': 'bg-violet-500/20 text-violet-400',
   }
-  return map[estatus] || 'bg-slate-700 text-slate-400'
+  return map[tamano] || 'bg-slate-700 text-slate-400'
 }
 
 function CosechaEstimada({ plant }: { plant: Plant }) {
@@ -223,7 +221,7 @@ export default function PlantasPage() {
     const res = await fetch(`/api/plantas/${selectedPlant.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cosecha: null, gramos: null, estatus: 'en flor' }),
+      body: JSON.stringify({ cosecha: null, gramos: null, estatus: 'chica' }),
     })
     const updated = await res.json()
     setPlants(prev => prev.map(p => p.id === selectedPlant.id ? updated : p))
@@ -361,7 +359,7 @@ export default function PlantasPage() {
                       </>
                     ) : (
                       <>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estatusColor(plant.estatus)}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tamanoColor(plant.estatus)}`}>
                           {plant.estatus}
                         </span>
                         <span className="text-slate-500 text-xs">{plant.maceta}L</span>
@@ -388,7 +386,7 @@ export default function PlantasPage() {
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Cosecha est.</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Tipo</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Maceta</th>
-                <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Estatus</th>
+                <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Tamaño</th>
               </tr>
             </thead>
             <tbody>
@@ -431,7 +429,7 @@ export default function PlantasPage() {
                     </td>
                     <td className="px-3 py-3 text-slate-300">{plant.maceta}L</td>
                     <td className="px-3 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estatusColor(plant.estatus)}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tamanoColor(plant.estatus)}`}>
                         {plant.estatus}
                       </span>
                     </td>
@@ -503,7 +501,7 @@ export default function PlantasPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      <span className={`text-xs px-3 py-1 rounded-full font-medium ${estatusColor(detail.estatus)}`}>
+                      <span className={`text-xs px-3 py-1 rounded-full font-medium ${tamanoColor(detail.estatus)}`}>
                         {detail.estatus}
                       </span>
                       <span className="text-xs px-3 py-1 rounded-full font-medium bg-slate-700 text-slate-300 capitalize">
@@ -624,11 +622,11 @@ export default function PlantasPage() {
                     onChange={e => setForm(p => ({ ...p, maceta: e.target.value }))} />
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Estatus</Label>
+                  <Label className="mb-1.5 block">Tamaño</Label>
                   <Select value={form.estatus} onValueChange={v => setForm(p => ({ ...p, estatus: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {ESTATUS_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                      {TAMANO_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -674,7 +672,7 @@ export default function PlantasPage() {
               #{selectedPlant?.numero} · {selectedPlant?.raza}
             </p>
             <p className="text-slate-500 text-xs mb-6">
-              Se va a borrar la fecha de cosecha y los gramos registrados. El estatus vuelve a <span className="text-violet-400">en flor</span>.
+              Se va a borrar la fecha de cosecha y los gramos registrados. El tamaño vuelve a <span className="text-sky-400">chica</span>.
             </p>
             <div className="flex gap-3">
               <DialogClose asChild>
