@@ -4,7 +4,7 @@ import { PlantModel } from '@/lib/models'
 import { NextRequest, NextResponse } from 'next/server'
 
 const SEED_DATA = [
-  { numero: 1, raza: 'Pina Express',  banco: 'Semishop', inicio: '2026-07-09', tipo: 'auto', maceta: 40, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 1, raza: 'Pina Express',  banco: 'Semishop', inicio: '2026-07-09', tipo: 'auto', maceta: 40, productos: ['Eden'], estatus: 'cosechada', cultivo: 'indoor', cosecha: '2026-10-01', gramos: 10 },
   { numero: 2, raza: 'Grapefruit',    banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 10, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
   { numero: 3, raza: 'Grapefruit',    banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 15, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
   { numero: 4, raza: 'White Widow',   banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 20, productos: ['Eden'], estatus: 'mal estado', cultivo: 'indoor' },

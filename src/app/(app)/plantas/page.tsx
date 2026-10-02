@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -110,6 +110,10 @@ export default function PlantasPage() {
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null)
   const [showDetail, setShowDetail] = useState(false)
 
+  const [showHarvest, setShowHarvest] = useState(false)
+  const [harvestForm, setHarvestForm] = useState({ fecha: today(), gramos: '' })
+  const [savingHarvest, setSavingHarvest] = useState(false)
+
   useEffect(() => { loadData() }, [viewAsId])
 
   async function loadData() {
@@ -185,6 +189,30 @@ export default function PlantasPage() {
     }
     setSaving(false)
     setShowForm(false)
+  }
+
+  function openHarvest() {
+    setHarvestForm({ fecha: today(), gramos: '' })
+    setShowHarvest(true)
+  }
+
+  async function handleFinalizeHarvest() {
+    if (!selectedPlant || !harvestForm.fecha || !harvestForm.gramos) return
+    setSavingHarvest(true)
+    const res = await fetch(`/api/plantas/${selectedPlant.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cosecha: harvestForm.fecha,
+        gramos: Number(harvestForm.gramos),
+        estatus: 'cosechada',
+      }),
+    })
+    const updated = await res.json()
+    setPlants(prev => prev.map(p => p.id === selectedPlant.id ? updated : p))
+    setSelectedPlant(updated)
+    setSavingHarvest(false)
+    setShowHarvest(false)
   }
 
   async function handleDelete(id: string) {
@@ -281,25 +309,48 @@ export default function PlantasPage() {
               <div
                 key={plant.id}
                 onClick={() => openDetail(plant)}
-                className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform"
+                className={`rounded-2xl p-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform border ${
+                  cosechada
+                    ? 'bg-amber-500/8 border-amber-500/30'
+                    : 'bg-slate-900 border-slate-800'
+                }`}
               >
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                  <span className="text-emerald-400 font-black text-lg">#{plant.numero}</span>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  cosechada
+                    ? 'bg-amber-500/20 border border-amber-500/40'
+                    : 'bg-emerald-500/15 border border-emerald-500/30'
+                }`}>
+                  <span className={`font-black text-lg ${cosechada ? 'text-amber-400' : 'text-emerald-400'}`}>
+                    #{plant.numero}
+                  </span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-white font-bold text-sm truncate">{plant.raza}</p>
-                    <span className="text-slate-600 text-xs">{plant.banco}</span>
+                    {cosechada && <span className="text-amber-400 text-xs">🌾</span>}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estatusColor(plant.estatus)}`}>
-                      {plant.estatus}
-                    </span>
-                    <span className="text-slate-500 text-xs">{plant.maceta}L</span>
-                    {cosechada
-                      ? <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">🌾 {diasTotales}d</span>
-                      : <span className="text-slate-400 text-xs">{dias}d · <CosechaEstimada plant={plant} /></span>
-                    }
+                    {cosechada ? (
+                      <>
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-400">
+                          {diasTotales}d
+                        </span>
+                        {plant.gramos != null && (
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-300 font-bold">
+                            {plant.gramos}g
+                          </span>
+                        )}
+                        <span className="text-slate-500 text-xs">{plant.maceta}L</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estatusColor(plant.estatus)}`}>
+                          {plant.estatus}
+                        </span>
+                        <span className="text-slate-500 text-xs">{plant.maceta}L</span>
+                        <span className="text-slate-400 text-xs">{dias}d · <CosechaEstimada plant={plant} /></span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-slate-600 flex-shrink-0" />
@@ -443,14 +494,36 @@ export default function PlantasPage() {
                       )}
                     </div>
 
-                    {!cosechada && (
-                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
-                        <p className="text-emerald-400 text-xs font-semibold mb-0.5">Cosecha estimada</p>
-                        <p className="text-white text-sm font-bold">{formatFecha(estMin)} — {formatFecha(estMax)}</p>
-                        <p className="text-emerald-400/70 text-xs mt-0.5">
-                          <CosechaEstimada plant={detail} />
-                        </p>
+                    {cosechada ? (
+                      <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-amber-400 text-xs font-semibold">🌾 Cosechada</p>
+                          <p className="text-white text-sm font-bold mt-0.5">{formatFecha(detail.cosecha!)}</p>
+                        </div>
+                        {detail.gramos != null && (
+                          <div className="text-right">
+                            <p className="text-amber-300 text-2xl font-black">{detail.gramos}g</p>
+                            <p className="text-slate-400 text-xs">obtenidos</p>
+                          </div>
+                        )}
                       </div>
+                    ) : (
+                      <>
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+                          <p className="text-emerald-400 text-xs font-semibold mb-0.5">Cosecha estimada</p>
+                          <p className="text-white text-sm font-bold">{formatFecha(estMin)} — {formatFecha(estMax)}</p>
+                          <p className="text-emerald-400/70 text-xs mt-0.5">
+                            <CosechaEstimada plant={detail} />
+                          </p>
+                        </div>
+                        <Button
+                          onClick={openHarvest}
+                          className="w-full bg-amber-600 hover:bg-amber-500 text-white"
+                          size="lg"
+                        >
+                          <CheckCircle2 size={16} className="mr-2" /> Finalizar cosecha
+                        </Button>
+                      </>
                     )}
 
                     <div className="bg-slate-800 rounded-xl divide-y divide-slate-700">
@@ -549,6 +622,47 @@ export default function PlantasPage() {
                 {saving
                   ? <><Loader2 size={16} className="mr-2 animate-spin" />Guardando...</>
                   : editingPlant ? 'Guardar cambios' : 'Agregar planta'}
+              </Button>
+            </div>
+          </div>
+        </BottomSheet>
+      </Dialog>
+
+      {/* Finalizar cosecha sheet */}
+      <Dialog open={showHarvest} onOpenChange={setShowHarvest}>
+        <BottomSheet>
+          <div className="px-5 pb-8 pt-2">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-white">🌾 Finalizar cosecha</h2>
+              <DialogClose asChild>
+                <button className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                  <X size={18} />
+                </button>
+              </DialogClose>
+            </div>
+            <p className="text-slate-400 text-sm mb-5">
+              #{selectedPlant?.numero} · {selectedPlant?.raza}
+            </p>
+            <div className="flex flex-col gap-4">
+              <div>
+                <Label className="mb-1.5 block">Fecha de cosecha</Label>
+                <Input type="date" value={harvestForm.fecha}
+                  onChange={e => setHarvestForm(p => ({ ...p, fecha: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="mb-1.5 block">Gramos obtenidos</Label>
+                <Input type="number" placeholder="Ej: 45" value={harvestForm.gramos}
+                  onChange={e => setHarvestForm(p => ({ ...p, gramos: e.target.value }))} />
+              </div>
+              <Button
+                onClick={handleFinalizeHarvest}
+                className="w-full mt-1 bg-amber-600 hover:bg-amber-500 text-white"
+                size="lg"
+                disabled={savingHarvest || !harvestForm.fecha || !harvestForm.gramos}
+              >
+                {savingHarvest
+                  ? <><Loader2 size={16} className="mr-2 animate-spin" />Guardando...</>
+                  : 'Confirmar cosecha'}
               </Button>
             </div>
           </div>

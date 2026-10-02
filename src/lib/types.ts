@@ -77,6 +77,7 @@ export interface Plant {
   estatus: string // chica | en vegetación | en flor | cosechada
   cultivo: 'indoor' | 'outdoor'
   cosecha?: string // YYYY-MM-DD
+  gramos?: number
   userId: string
   createdAt: string
 }

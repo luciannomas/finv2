@@ -91,6 +91,7 @@ const PlantSchema = new Schema(
     estatus: { type: String, default: 'chica' },
     cultivo: { type: String, enum: ['indoor', 'outdoor'], default: 'indoor' },
     cosecha: { type: String, default: null },
+    gramos: { type: Number, default: null },
     userId: { type: String, required: true },
     createdAt: { type: String, default: () => new Date().toISOString() },
   },
