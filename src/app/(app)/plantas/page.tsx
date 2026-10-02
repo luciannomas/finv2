@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, LayoutList, Table2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -195,49 +195,33 @@ export default function PlantasPage() {
           <h1 className="text-2xl font-bold text-white">Plantas</h1>
           <p className="text-slate-400 text-sm">{plants.length} plantas · indoor</p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* View toggle */}
-          <div className="flex bg-slate-800 rounded-xl p-1 gap-1">
-            <button
-              onClick={() => setViewMode('cards')}
-              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'cards' ? 'bg-slate-600 text-white' : 'text-slate-500'}`}
-            >
-              <LayoutList size={15} />
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-slate-600 text-white' : 'text-slate-500'}`}
-            >
-              <Table2 size={15} />
-            </button>
-          </div>
-          <Button size="icon" onClick={openCreate} className="w-10 h-10 rounded-2xl">
-            <Plus size={18} />
-          </Button>
-        </div>
+        <Button size="icon" onClick={openCreate} className="w-11 h-11 rounded-2xl">
+          <Plus size={20} />
+        </Button>
       </div>
 
-      {/* Sort toggle */}
-      {!loading && plants.length > 0 && (
-        <div className="flex gap-2 mb-4">
+      {/* Tabs */}
+      <div className="flex gap-1 bg-slate-800/60 rounded-2xl p-1 mb-5">
+        {([
+          { id: 'cards', label: 'Plantas' },
+          { id: 'table', label: '🌾 Cosecha' },
+        ] as { id: 'cards' | 'table'; label: string }[]).map(tab => (
           <button
-            onClick={() => setSortByHarvest(false)}
-            className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-              !sortByHarvest ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'
+            key={tab.id}
+            onClick={() => {
+              setViewMode(tab.id)
+              setSortByHarvest(tab.id === 'table')
+            }}
+            className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${
+              viewMode === tab.id
+                ? 'bg-slate-700 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Por número
+            {tab.label}
           </button>
-          <button
-            onClick={() => setSortByHarvest(true)}
-            className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-              sortByHarvest ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'
-            }`}
-          >
-            🌾 Próxima cosecha
-          </button>
-        </div>
-      )}
+        ))}
+      </div>
 
       {loading ? (
         <div className="flex flex-col gap-3">
