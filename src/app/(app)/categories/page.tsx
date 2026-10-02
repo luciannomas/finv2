@@ -83,6 +83,7 @@ export default function CategoriesPage() {
   const [form, setForm] = useState<CategoryForm>(emptyForm)
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeleteCat, setConfirmDeleteCat] = useState<Category | null>(null)
 
   // Category detail
   const [selectedCat, setSelectedCat] = useState<Category | null>(null)
@@ -160,6 +161,7 @@ export default function CategoriesPage() {
     await fetch(`/api/categories/${id}`, { method: 'DELETE' })
     setCategories(prev => prev.filter(c => c.id !== id))
     setDeletingId(null)
+    setConfirmDeleteCat(null)
   }
 
   // Expense actions from detail view
@@ -327,7 +329,7 @@ export default function CategoriesPage() {
                       <Pencil size={12} />
                     </button>
                     <button
-                      onClick={e => { e.stopPropagation(); handleDeleteCat(cat.id) }}
+                      onClick={e => { e.stopPropagation(); setConfirmDeleteCat(cat) }}
                       disabled={deletingId === cat.id}
                       className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
                     >
@@ -618,6 +620,51 @@ export default function CategoriesPage() {
                   ? <><Loader2 size={16} className="mr-2 animate-spin" />Guardando...</>
                   : editingCat ? 'Guardar cambios' : 'Crear categoría'}
               </Button>
+            </div>
+          </div>
+        </BottomSheet>
+      </Dialog>
+
+      {/* Confirmar eliminar categoría */}
+      <Dialog open={!!confirmDeleteCat} onOpenChange={open => { if (!open) setConfirmDeleteCat(null) }}>
+        <BottomSheet>
+          <div className="px-5 pb-8 pt-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white">¿Eliminar categoría?</h2>
+              <button
+                onClick={() => setConfirmDeleteCat(null)}
+                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            {confirmDeleteCat && (
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${confirmDeleteCat.color}22` }}>
+                  <div className="w-3.5 h-3.5 rounded-full" style={{ background: confirmDeleteCat.color }} />
+                </div>
+                <div>
+                  <p className="text-white font-semibold">{confirmDeleteCat.name}</p>
+                  <p className="text-slate-500 text-xs">Los gastos de esta categoría quedarán sin categoría</p>
+                </div>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteCat(null)}
+                className="flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 text-sm font-semibold hover:bg-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => confirmDeleteCat && handleDeleteCat(confirmDeleteCat.id)}
+                disabled={!!deletingId}
+                className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deletingId
+                  ? <><Loader2 size={14} className="animate-spin" /> Eliminando...</>
+                  : 'Sí, eliminar'}
+              </button>
             </div>
           </div>
         </BottomSheet>
