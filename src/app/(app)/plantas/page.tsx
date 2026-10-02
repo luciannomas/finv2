@@ -26,6 +26,7 @@ const AUTO_MIN = 75
 const AUTO_MAX = 90
 
 interface PlantForm {
+  numero: string
   raza: string
   banco: string
   inicio: string
@@ -39,7 +40,7 @@ interface PlantForm {
 }
 
 const emptyForm = (): PlantForm => ({
-  raza: '', banco: '', inicio: today(), tipo: 'auto',
+  numero: '', raza: '', banco: '', inicio: today(), tipo: 'auto',
   maceta: '', productos: '', estatus: 'chica', cultivo: 'indoor', feno: '', cosecha: '',
 })
 
@@ -149,7 +150,7 @@ export default function PlantasPage() {
   function openEdit(plant: Plant) {
     setEditingPlant(plant)
     setForm({
-      raza: plant.raza, banco: plant.banco, inicio: plant.inicio,
+      numero: String(plant.numero), raza: plant.raza, banco: plant.banco, inicio: plant.inicio,
       tipo: plant.tipo, maceta: String(plant.maceta),
       productos: plant.productos.join(', '), estatus: plant.estatus,
       cultivo: plant.cultivo, feno: plant.feno || '', cosecha: plant.cosecha || '',
@@ -167,6 +168,7 @@ export default function PlantasPage() {
     if (!form.raza || !form.banco || !form.inicio || !form.maceta) return
     setSaving(true)
     const payload = {
+      ...(form.numero ? { numero: Number(form.numero) } : {}),
       raza: form.raza, banco: form.banco, inicio: form.inicio,
       tipo: form.tipo, maceta: Number(form.maceta),
       productos: form.productos ? form.productos.split(',').map(p => p.trim()).filter(Boolean) : [],
@@ -617,6 +619,16 @@ export default function PlantasPage() {
               </DialogClose>
             </div>
             <div className="flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
+              <div>
+                <Label className="mb-1.5 block">Número de cepa</Label>
+                <Input
+                  type="number"
+                  placeholder="Auto (o ingresá el número de la cepa)"
+                  value={form.numero}
+                  onChange={e => setForm(p => ({ ...p, numero: e.target.value }))}
+                />
+                <p className="text-slate-500 text-xs mt-1">Usá el mismo número para varias plantas de la misma raza</p>
+              </div>
               <div>
                 <Label className="mb-1.5 block">Raza</Label>
                 <Input placeholder="Ej: White Widow" value={form.raza}

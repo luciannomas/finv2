@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const viewAs = isSuperAdmin ? searchParams.get('viewAs') : null
   const targetUserId = viewAs || session.user.id
 
-  const plants = await PlantModel.find({ userId: targetUserId }).sort({ numero: 1 })
+  const plants = await PlantModel.find({ userId: targetUserId }).sort({ numero: 1, inicio: 1 })
   return NextResponse.json(plants.map(p => p.toJSON()))
 }
 
@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
     productos: body.productos || [],
     estatus: body.estatus || 'chica',
     cultivo: body.cultivo || 'indoor',
+    feno: body.feno || null,
     cosecha: body.cosecha || null,
     userId: session.user.id,
   })
