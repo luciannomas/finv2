@@ -78,8 +78,28 @@ function model<T = any>(name: string, schema: Schema): Model<T> {
   return (mongoose.models[name] as Model<T>) || mongoose.model<T>(name, schema)
 }
 
+// ── Plant ─────────────────────────────────────────────────────────────────────
+const PlantSchema = new Schema(
+  {
+    numero: { type: Number, required: true },
+    raza: { type: String, required: true },
+    banco: { type: String, required: true },
+    inicio: { type: String, required: true },
+    tipo: { type: String, enum: ['auto', 'fem'], default: 'auto' },
+    maceta: { type: Number, required: true },
+    productos: { type: [String], default: [] },
+    estatus: { type: String, default: 'chica' },
+    cultivo: { type: String, enum: ['indoor', 'outdoor'], default: 'indoor' },
+    cosecha: { type: String, default: null },
+    userId: { type: String, required: true },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+  },
+  opts
+)
+
 export const UserModel = model('User', UserSchema)
 export const CategoryModel = model('Category', CategorySchema)
 export const ExpenseModel = model('Expense', ExpenseSchema)
 export const IncomeModel = model('Income', IncomeSchema)
 export const NotificationSettingsModel = model('NotificationSettings', NotificationSettingsSchema)
+export const PlantModel = model('Plant', PlantSchema)

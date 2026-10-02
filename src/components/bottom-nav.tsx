@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
-import { Home, Receipt, TrendingUp, LayoutGrid, User, ShieldCheck, Bell } from 'lucide-react'
+import { Home, Receipt, TrendingUp, LayoutGrid, User, ShieldCheck, Bell, Leaf } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { NotificationSettings, Expense } from '@/lib/types'
 
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/expenses', icon: Receipt, label: 'Gastos' },
   { href: '/categories', icon: LayoutGrid, label: 'Categorías' },
   { href: '/incomes', icon: TrendingUp, label: 'Ingresos' },
+  { href: '/plantas', icon: Leaf, label: 'Plantas' },
   { href: '/notifications', icon: Bell, label: 'Alertas', hasBadge: true },
   { href: '/profile', icon: User, label: 'Perfil' },
 ]

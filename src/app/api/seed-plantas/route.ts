@@ -1,0 +1,37 @@
+import { connectDB } from '@/lib/mongodb'
+import { PlantModel } from '@/lib/models'
+import { NextRequest, NextResponse } from 'next/server'
+
+const SEED_DATA = [
+  { numero: 1, raza: 'Pina Express',  banco: 'Semishop', inicio: '2026-07-09', tipo: 'auto', maceta: 40, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 2, raza: 'Grapefruit',    banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 10, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 3, raza: 'Grapefruit',    banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 15, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 4, raza: 'White Widow',   banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 10, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 5, raza: 'White Widow',   banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 10, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 6, raza: 'White Widow',   banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 10, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 7, raza: 'Oregon Peach',  banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 30, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 8, raza: 'Oregon Peach',  banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 30, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 9, raza: 'Gorilla',       banco: 'Semishop', inicio: '2026-08-10', tipo: 'auto', maceta: 10, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+]
+
+// POST /api/seed-plantas  — temporarily public, pass { userId } in body
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+  const { userId } = body
+
+  if (!userId) return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
+
+  await connectDB()
+
+  // Avoid duplicate seed
+  const existing = await PlantModel.countDocuments({ userId })
+  if (existing > 0) {
+    return NextResponse.json({ error: `Ya existen ${existing} plantas para este usuario. Borralas primero.` }, { status: 409 })
+  }
+
+  const plants = await PlantModel.insertMany(
+    SEED_DATA.map(p => ({ ...p, userId }))
+  )
+
+  return NextResponse.json({ success: true, created: plants.length })
+}

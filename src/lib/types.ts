@@ -64,3 +64,19 @@ export interface Income {
   createdAt: string
   notes?: string
 }
+
+export interface Plant {
+  id: string
+  numero: number
+  raza: string
+  banco: string
+  inicio: string // YYYY-MM-DD
+  tipo: 'auto' | 'fem'
+  maceta: number // litros
+  productos: string[]
+  estatus: string // chica | en vegetación | en flor | cosechada
+  cultivo: 'indoor' | 'outdoor'
+  cosecha?: string // YYYY-MM-DD
+  userId: string
+  createdAt: string
+}

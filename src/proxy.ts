@@ -10,7 +10,7 @@ export default auth((req) => {
 
   const isLoginPage = nextUrl.pathname === '/login'
   const isApiAuth = nextUrl.pathname.startsWith('/api/auth')
-  const isSeedRoute = nextUrl.pathname === '/api/seed'
+  const isSeedRoute = nextUrl.pathname === '/api/seed' || nextUrl.pathname === '/api/seed-plantas'
 
   if (isApiAuth || isSeedRoute) return NextResponse.next()
 
