@@ -215,6 +215,18 @@ export default function PlantasPage() {
     setShowHarvest(false)
   }
 
+  async function handleRevertHarvest() {
+    if (!selectedPlant) return
+    const res = await fetch(`/api/plantas/${selectedPlant.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cosecha: null, gramos: null, estatus: 'en flor' }),
+    })
+    const updated = await res.json()
+    setPlants(prev => prev.map(p => p.id === selectedPlant.id ? updated : p))
+    setSelectedPlant(updated)
+  }
+
   async function handleDelete(id: string) {
     setDeletingId(id)
     await fetch(`/api/plantas/${id}`, { method: 'DELETE' })
@@ -394,7 +406,12 @@ export default function PlantasPage() {
                     <td className="px-3 py-3 text-slate-300 font-medium">{dias}d</td>
                     <td className="px-3 py-3">
                       {plant.cosecha ? (
-                        <span className="text-amber-400 text-xs">🌾 {formatFecha(plant.cosecha)}</span>
+                        <div className="text-xs">
+                          <p className="text-amber-400">🌾 {formatFecha(plant.cosecha)}</p>
+                          {plant.gramos != null && (
+                            <p className="text-amber-300 font-bold mt-0.5">{plant.gramos}g</p>
+                          )}
+                        </div>
                       ) : (
                         <div className="text-xs">
                           <p className="text-slate-400">{formatFecha(addDays(plant.inicio, AUTO_MIN))} –</p>
@@ -495,17 +512,25 @@ export default function PlantasPage() {
                     </div>
 
                     {cosechada ? (
-                      <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3 flex items-center justify-between">
-                        <div>
-                          <p className="text-amber-400 text-xs font-semibold">🌾 Cosechada</p>
-                          <p className="text-white text-sm font-bold mt-0.5">{formatFecha(detail.cosecha!)}</p>
-                        </div>
-                        {detail.gramos != null && (
-                          <div className="text-right">
-                            <p className="text-amber-300 text-2xl font-black">{detail.gramos}g</p>
-                            <p className="text-slate-400 text-xs">obtenidos</p>
+                      <div className="flex flex-col gap-2">
+                        <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3 flex items-center justify-between">
+                          <div>
+                            <p className="text-amber-400 text-xs font-semibold">🌾 Cosechada</p>
+                            <p className="text-white text-sm font-bold mt-0.5">{formatFecha(detail.cosecha!)}</p>
                           </div>
-                        )}
+                          {detail.gramos != null && (
+                            <div className="text-right">
+                              <p className="text-amber-300 text-2xl font-black">{detail.gramos}g</p>
+                              <p className="text-slate-400 text-xs">obtenidos</p>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={handleRevertHarvest}
+                          className="w-full text-xs text-slate-500 hover:text-slate-300 py-2 transition-colors"
+                        >
+                          ↩ Revertir cosecha
+                        </button>
                       </div>
                     ) : (
                       <>
