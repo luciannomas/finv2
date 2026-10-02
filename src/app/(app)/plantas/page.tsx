@@ -97,8 +97,9 @@ export default function PlantasPage() {
   const { viewAsId } = useViewAs()
   const [plants, setPlants] = useState<Plant[]>([])
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
-  const [sortByHarvest, setSortByHarvest] = useState(false)
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table')
+  const [sortByHarvest, setSortByHarvest] = useState(true)
+  const [filterMonth, setFilterMonth] = useState<string>('')
 
   const [showForm, setShowForm] = useState(false)
   const [editingPlant, setEditingPlant] = useState<Plant | null>(null)
@@ -119,7 +120,16 @@ export default function PlantasPage() {
     setLoading(false)
   }
 
-  const sortedPlants = [...plants].sort((a, b) =>
+  const filteredPlants = filterMonth
+    ? plants.filter(p => {
+        if (p.cosecha) return p.cosecha.startsWith(filterMonth)
+        const estMin = addDays(p.inicio, AUTO_MIN)
+        const estMax = addDays(p.inicio, AUTO_MAX)
+        return estMin.startsWith(filterMonth) || estMax.startsWith(filterMonth)
+      })
+    : plants
+
+  const sortedPlants = [...filteredPlants].sort((a, b) =>
     sortByHarvest
       ? diasHastaCosecha(a) - diasHastaCosecha(b)
       : a.numero - b.numero
@@ -201,7 +211,7 @@ export default function PlantasPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-slate-800/60 rounded-2xl p-1 mb-5">
+      <div className="flex gap-1 bg-slate-800/60 rounded-2xl p-1 mb-3">
         {([
           { id: 'cards', label: 'Plantas' },
           { id: 'table', label: '🌾 Cosecha' },
@@ -222,6 +232,26 @@ export default function PlantasPage() {
           </button>
         ))}
       </div>
+
+      {/* Month filter (table only) */}
+      {viewMode === 'table' && !loading && plants.length > 0 && (
+        <div className="flex items-center gap-2 mb-4">
+          <input
+            type="month"
+            value={filterMonth}
+            onChange={e => setFilterMonth(e.target.value)}
+            className="flex-1 bg-slate-800 border border-slate-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500"
+          />
+          {filterMonth && (
+            <button
+              onClick={() => setFilterMonth('')}
+              className="text-xs text-slate-400 hover:text-white bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 transition-colors"
+            >
+              Todos
+            </button>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex flex-col gap-3">
@@ -288,6 +318,7 @@ export default function PlantasPage() {
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Inicio</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Días</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Cosecha est.</th>
+                <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Tipo</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Maceta</th>
                 <th className="text-left text-slate-400 text-xs font-semibold px-3 py-3">Estatus</th>
               </tr>
@@ -319,6 +350,11 @@ export default function PlantasPage() {
                           <p className="text-slate-400">{formatFecha(addDays(plant.inicio, AUTO_MAX))}</p>
                         </div>
                       )}
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${plant.tipo === 'auto' ? 'bg-violet-500/20 text-violet-400' : 'bg-pink-500/20 text-pink-400'}`}>
+                        {plant.tipo}
+                      </span>
                     </td>
                     <td className="px-3 py-3 text-slate-300">{plant.maceta}L</td>
                     <td className="px-3 py-3">
