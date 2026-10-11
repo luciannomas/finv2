@@ -27,7 +27,18 @@ const CULTIVO_OPTIONS = [
   { value: 'outdoor', label: 'Outdoor' },
 ]
 
-function estadoColor(estado: string): string {
+function estadoAuto(dias: number): 'vege' | 'pre flora' | 'flora' {
+  if (dias <= 30) return 'vege'
+  if (dias <= 60) return 'pre flora'
+  return 'flora'
+}
+
+function getEstado(plant: Plant): string {
+  if (plant.cosecha) return 'cosechada'
+  if (plant.tipo === 'auto') return estadoAuto(diasDesde(plant.inicio))
+  return plant.estado || 'vege'
+}
+
   const map: Record<string, string> = {
     'vege':      'bg-emerald-500/20 text-emerald-400',
     'pre flora': 'bg-yellow-500/20 text-yellow-400',
@@ -431,8 +442,8 @@ export default function PlantasPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-white font-bold text-sm truncate">{plant.raza}</p>
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 font-medium ${estadoColor(plant.estado || (plant.cosecha ? 'cosechada' : 'vege'))}`}>
-                      {estadoIcon(plant.estado || (plant.cosecha ? 'cosechada' : 'vege'))} {plant.estado || (plant.cosecha ? 'cosechada' : 'vege')}
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 font-medium ${estadoColor(getEstado(plant))}`}>
+                      {estadoIcon(getEstado(plant))} {getEstado(plant)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -505,8 +516,8 @@ export default function PlantasPage() {
                       )}
                     </td>
                     <td className="px-3 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estadoColor(plant.estado || (plant.cosecha ? 'cosechada' : 'vege'))}`}>
-                        {estadoIcon(plant.estado || (plant.cosecha ? 'cosechada' : 'vege'))} {plant.estado || (plant.cosecha ? 'cosechada' : 'vege')}
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estadoColor(getEstado(plant))}`}>
+                        {estadoIcon(getEstado(plant))} {getEstado(plant)}
                       </span>
                     </td>
                     <td className="px-3 py-3">
@@ -623,6 +634,9 @@ export default function PlantasPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                      <span className={`text-xs px-3 py-1 rounded-full font-medium ${estadoColor(getEstado(detail))}`}>
+                        {estadoIcon(getEstado(detail))} {getEstado(detail)}
+                      </span>
                       <span className={`text-xs px-3 py-1 rounded-full font-medium ${tamanoColor(detail.estatus)}`}>
                         {detail.estatus}
                       </span>
