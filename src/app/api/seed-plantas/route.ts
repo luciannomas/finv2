@@ -13,6 +13,18 @@ const SEED_DATA = [
   { numero: 4, raza: 'Oregon Peach',  banco: 'Semishop', inicio: '2026-08-05', tipo: 'auto', maceta: 30, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
   { numero: 4, raza: 'Oregon Peach',  banco: 'Semishop', inicio: '2026-08-05', tipo: 'auto', maceta: 30, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
   { numero: 5, raza: 'Gorilla',       banco: 'Semishop', inicio: '2026-08-05', tipo: 'auto', maceta: 10, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 6, raza: 'Critical +2',   banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 6, raza: 'Critical +2',   banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 6, raza: 'Critical +2',   banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 7, raza: 'Black Dom',     banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 7, raza: 'Black Dom',     banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 7, raza: 'Black Dom',     banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 8, raza: 'Moby-D',        banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 8, raza: 'Moby-D',        banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 8, raza: 'Moby-D',        banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 9, raza: 'Northern',      banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 9, raza: 'Northern',      banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
+  { numero: 9, raza: 'Northern',      banco: 'Semishop', inicio: '2026-10-11', tipo: 'auto', maceta: 11, productos: ['Eden'], estatus: 'chica', cultivo: 'indoor' },
 ]
 
 // POST /api/seed-plantas — public, uses session userId or body userId
