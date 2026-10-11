@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, CheckCircle2, RefreshCw } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, ChevronLeft, CheckCircle2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -306,22 +306,46 @@ export default function PlantasPage() {
         ))}
       </div>
 
-      {/* Month filter (table only) */}
-      {viewMode === 'table' && !loading && plants.length > 0 && (
+      {/* Month filter */}
+      {!loading && plants.length > 0 && (
         <div className="flex items-center gap-2 mb-4">
-          <input
-            type="month"
-            value={filterMonth}
-            onChange={e => setFilterMonth(e.target.value)}
-            className="flex-1 bg-slate-800 border border-slate-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500"
-          />
-          {filterMonth && (
-            <button
-              onClick={() => setFilterMonth('')}
-              className="text-xs text-slate-400 hover:text-white bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 transition-colors"
-            >
-              Todos
-            </button>
+          {filterMonth ? (
+            <>
+              <button
+                onClick={() => {
+                  const [y, m] = filterMonth.split('-').map(Number)
+                  const d = new Date(y, m - 2)
+                  setFilterMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+                }}
+                className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => setFilterMonth('')}
+                className="flex-1 text-center text-white font-semibold text-sm bg-slate-800 border border-slate-700 rounded-xl py-2 hover:bg-slate-700 transition-colors"
+              >
+                {new Date(filterMonth + '-02').toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
+              </button>
+              <button
+                onClick={() => {
+                  const [y, m] = filterMonth.split('-').map(Number)
+                  const d = new Date(y, m)
+                  setFilterMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+                }}
+                className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </>
+          ) : (
+            <input
+              type="month"
+              value=""
+              onChange={e => setFilterMonth(e.target.value)}
+              className="flex-1 bg-slate-800 border border-slate-700 text-slate-400 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500"
+              placeholder="Filtrar por mes"
+            />
           )}
         </div>
       )}
