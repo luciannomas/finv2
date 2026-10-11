@@ -36,12 +36,13 @@ interface PlantForm {
   estatus: string
   cultivo: 'indoor' | 'outdoor'
   feno: string
+  foto: string
   cosecha: string
 }
 
 const emptyForm = (): PlantForm => ({
   numero: '', raza: '', banco: '', inicio: today(), tipo: 'auto',
-  maceta: '', productos: '', estatus: 'chica', cultivo: 'indoor', feno: '', cosecha: '',
+  maceta: '', productos: '', estatus: 'chica', cultivo: 'indoor', feno: '', foto: '', cosecha: '',
 })
 
 function diasDesde(dateStr: string): number {
@@ -162,7 +163,7 @@ export default function PlantasPage() {
       numero: String(plant.numero), raza: plant.raza, banco: plant.banco, inicio: plant.inicio,
       tipo: plant.tipo, maceta: String(plant.maceta),
       productos: plant.productos.join(', '), estatus: plant.estatus,
-      cultivo: plant.cultivo, feno: plant.feno || '', cosecha: plant.cosecha || '',
+      cultivo: plant.cultivo, feno: plant.feno || '', foto: plant.foto || '', cosecha: plant.cosecha || '',
     })
     setShowForm(true)
     setShowDetail(false)
@@ -183,6 +184,7 @@ export default function PlantasPage() {
       productos: form.productos ? form.productos.split(',').map(p => p.trim()).filter(Boolean) : [],
       estatus: form.estatus, cultivo: form.cultivo,
       feno: form.tipo === 'fem' && form.feno ? form.feno : null,
+      foto: form.foto || null,
       cosecha: form.cosecha || null,
     }
     if (editingPlant) {
@@ -545,6 +547,11 @@ export default function PlantasPage() {
 
                 return (
                   <div className="flex flex-col gap-4">
+                    {detail.foto && (
+                      <div className="rounded-2xl overflow-hidden border border-slate-700 max-h-56">
+                        <img src={detail.foto} alt={detail.raza} className="w-full h-full object-cover" />
+                      </div>
+                    )}
                     <div className="grid grid-cols-3 gap-3">
                       <div className="bg-slate-800 rounded-xl p-3 text-center">
                         <p className="text-white font-bold text-lg">{cosechada ? diasTotales : dias}</p>
@@ -717,6 +724,11 @@ export default function PlantasPage() {
                 <Label className="mb-1.5 block">Productos (separados por coma)</Label>
                 <Input placeholder="Ej: Eden, Rizo" value={form.productos}
                   onChange={e => setForm(p => ({ ...p, productos: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="mb-1.5 block">Foto (URL)</Label>
+                <Input placeholder="https://..." value={form.foto}
+                  onChange={e => setForm(p => ({ ...p, foto: e.target.value }))} />
               </div>
               <div>
                 <Label className="mb-1.5 block">Fecha de cosecha (opcional)</Label>
