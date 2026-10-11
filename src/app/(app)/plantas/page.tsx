@@ -12,6 +12,12 @@ import type { Plant } from '@/lib/types'
 import { useViewAs } from '@/lib/view-as-context'
 
 const TAMANO_OPTIONS = ['chica', 'mediana', 'grande']
+const ESTADO_OPTIONS = [
+  { value: 'vege',      label: 'Vegetativa' },
+  { value: 'pre flora', label: 'Pre flora' },
+  { value: 'flora',     label: 'Flora' },
+  { value: 'cosechada', label: 'Cosechada' },
+]
 const TIPO_OPTIONS = [
   { value: 'auto', label: 'Automática' },
   { value: 'fem', label: 'Feminizada' },
@@ -20,6 +26,23 @@ const CULTIVO_OPTIONS = [
   { value: 'indoor', label: 'Indoor' },
   { value: 'outdoor', label: 'Outdoor' },
 ]
+
+function estadoColor(estado: string): string {
+  const map: Record<string, string> = {
+    'vege':      'bg-emerald-500/20 text-emerald-400',
+    'pre flora': 'bg-yellow-500/20 text-yellow-400',
+    'flora':     'bg-violet-500/20 text-violet-400',
+    'cosechada': 'bg-amber-500/20 text-amber-400',
+  }
+  return map[estado] || 'bg-slate-700 text-slate-400'
+}
+
+function estadoIcon(estado: string): string {
+  const map: Record<string, string> = {
+    'vege': '🌱', 'pre flora': '🌼', 'flora': '🌸', 'cosechada': '🌾',
+  }
+  return map[estado] || '•'
+}
 
 // Auto: 75–90 days. We show both ends.
 const AUTO_MIN = 75
@@ -34,6 +57,7 @@ interface PlantForm {
   maceta: string
   productos: string
   estatus: string
+  estado: string
   cultivo: 'indoor' | 'outdoor'
   feno: string
   foto: string
@@ -42,7 +66,7 @@ interface PlantForm {
 
 const emptyForm = (): PlantForm => ({
   numero: '', raza: '', banco: '', inicio: today(), tipo: 'auto',
-  maceta: '', productos: '', estatus: 'chica', cultivo: 'indoor', feno: '', foto: '', cosecha: '',
+  maceta: '', productos: '', estatus: 'chica', estado: 'vege', cultivo: 'indoor', feno: '', foto: '', cosecha: '',
 })
 
 function diasDesde(dateStr: string): number {
@@ -164,7 +188,7 @@ export default function PlantasPage() {
       numero: String(plant.numero), raza: plant.raza, banco: plant.banco, inicio: plant.inicio,
       tipo: plant.tipo, maceta: String(plant.maceta),
       productos: plant.productos.join(', '), estatus: plant.estatus,
-      cultivo: plant.cultivo, feno: plant.feno || '', foto: plant.foto || '', cosecha: plant.cosecha || '',
+      estado: plant.estado || 'vege', cultivo: plant.cultivo, feno: plant.feno || '', foto: plant.foto || '', cosecha: plant.cosecha || '',
     })
     setShowForm(true)
     setShowDetail(false)
@@ -183,7 +207,7 @@ export default function PlantasPage() {
       raza: form.raza, banco: form.banco, inicio: form.inicio,
       tipo: form.tipo, maceta: Number(form.maceta),
       productos: form.productos ? form.productos.split(',').map(p => p.trim()).filter(Boolean) : [],
-      estatus: form.estatus, cultivo: form.cultivo,
+      estatus: form.estatus, estado: form.estado, cultivo: form.cultivo,
       feno: form.tipo === 'fem' && form.feno ? form.feno : null,
       foto: form.foto || null,
       cosecha: form.cosecha || null,
@@ -222,6 +246,7 @@ export default function PlantasPage() {
       body: JSON.stringify({
         cosecha: harvestForm.fecha,
         gramos: Number(harvestForm.gramos),
+        estado: 'cosechada',
       }),
     })
     const updated = await res.json()
@@ -241,6 +266,7 @@ export default function PlantasPage() {
         cosecha: null,
         gramos: null,
         ...(selectedPlant.estatus === 'cosechada' ? { estatus: 'chica' } : {}),
+        ...(selectedPlant.estado === 'cosechada' ? { estado: 'vege' } : {}),
       }),
     })
     const updated = await res.json()
@@ -405,10 +431,9 @@ export default function PlantasPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-white font-bold text-sm truncate">{plant.raza}</p>
-                    {cosechada
-                      ? <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 shrink-0">🌾 cosechada</span>
-                      : <span className="text-xs px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">🌱 proceso</span>
-                    }
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 font-medium ${estadoColor(plant.estado || (plant.cosecha ? 'cosechada' : 'vege'))}`}>
+                      {estadoIcon(plant.estado || (plant.cosecha ? 'cosechada' : 'vege'))} {plant.estado || (plant.cosecha ? 'cosechada' : 'vege')}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     {cosechada ? (
@@ -480,10 +505,9 @@ export default function PlantasPage() {
                       )}
                     </td>
                     <td className="px-3 py-3">
-                      {plant.cosecha
-                        ? <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-400">🌾 cosechada</span>
-                        : <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-500/20 text-emerald-400">🌱 proceso</span>
-                      }
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estadoColor(plant.estado || (plant.cosecha ? 'cosechada' : 'vege'))}`}>
+                        {estadoIcon(plant.estado || (plant.cosecha ? 'cosechada' : 'vege'))} {plant.estado || (plant.cosecha ? 'cosechada' : 'vege')}
+                      </span>
                     </td>
                     <td className="px-3 py-3">
                       <p className="text-white font-semibold">{plant.raza}</p>
@@ -725,11 +749,6 @@ export default function PlantasPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="mb-1.5 block">Maceta (litros)</Label>
-                  <Input type="number" placeholder="10" value={form.maceta}
-                    onChange={e => setForm(p => ({ ...p, maceta: e.target.value }))} />
-                </div>
-                <div>
                   <Label className="mb-1.5 block">Tamaño</Label>
                   <Select value={form.estatus} onValueChange={v => setForm(p => ({ ...p, estatus: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -738,6 +757,20 @@ export default function PlantasPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label className="mb-1.5 block">Estado</Label>
+                  <Select value={form.estado} onValueChange={v => setForm(p => ({ ...p, estado: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {ESTADO_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label className="mb-1.5 block">Maceta (litros)</Label>
+                <Input type="number" placeholder="10" value={form.maceta}
+                  onChange={e => setForm(p => ({ ...p, maceta: e.target.value }))} />
               </div>
               {form.tipo === 'fem' && (
                 <div>

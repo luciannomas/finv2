@@ -89,6 +89,7 @@ const PlantSchema = new Schema(
     maceta: { type: Number, required: true },
     productos: { type: [String], default: [] },
     estatus: { type: String, enum: ['chica', 'mediana', 'grande'], default: 'chica' },
+    estado: { type: String, enum: ['vege', 'pre flora', 'flora', 'cosechada'], default: 'vege' },
     cultivo: { type: String, enum: ['indoor', 'outdoor'], default: 'indoor' },
     feno: { type: String, default: null },
     foto: { type: String, default: null },

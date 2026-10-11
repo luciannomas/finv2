@@ -74,7 +74,8 @@ export interface Plant {
   tipo: 'auto' | 'fem'
   maceta: number // litros
   productos: string[]
-  estatus: string // chica | en vegetación | en flor | cosechada
+  estatus: string // chica | mediana | grande
+  estado: 'vege' | 'pre flora' | 'flora' | 'cosechada'
   cultivo: 'indoor' | 'outdoor'
   feno?: string
   foto?: string
