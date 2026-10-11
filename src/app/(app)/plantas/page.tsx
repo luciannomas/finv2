@@ -337,6 +337,12 @@ export default function PlantasPage() {
               >
                 <ChevronRight size={16} />
               </button>
+              <button
+                onClick={() => setFilterMonth('')}
+                className="text-xs text-slate-400 hover:text-white bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 transition-colors"
+              >
+                Todos
+              </button>
             </>
           ) : (
             <input
