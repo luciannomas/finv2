@@ -24,6 +24,11 @@ export async function POST() {
 
   await connectDB()
 
+  const existing = await PlantModel.countDocuments({ userId: session.user!.id, numero: { $in: [6,7,8,9] } })
+  if (existing > 0) {
+    return NextResponse.json({ success: true, created: 0, message: 'Ya estaban cargadas' })
+  }
+
   const plants = await PlantModel.insertMany(
     NUEVAS.map(p => ({
       ...p,
