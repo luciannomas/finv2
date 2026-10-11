@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, CheckCircle2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, CheckCircle2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -115,6 +115,15 @@ export default function PlantasPage() {
   const [savingHarvest, setSavingHarvest] = useState(false)
   const [showRevertConfirm, setShowRevertConfirm] = useState(false)
   const [revertingHarvest, setRevertingHarvest] = useState(false)
+
+  const [loadingNew, setLoadingNew] = useState(false)
+
+  async function handleCargarNuevas() {
+    setLoadingNew(true)
+    await fetch('/api/add-nuevas-plantas', { method: 'POST' })
+    await loadData()
+    setLoadingNew(false)
+  }
 
   useEffect(() => { loadData() }, [viewAsId])
 
@@ -256,9 +265,19 @@ export default function PlantasPage() {
           <h1 className="text-2xl font-bold text-white">Plantas</h1>
           <p className="text-slate-400 text-sm">{plants.length} plantas · indoor</p>
         </div>
-        <Button size="icon" onClick={openCreate} className="w-11 h-11 rounded-2xl">
-          <Plus size={20} />
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleCargarNuevas}
+            disabled={loadingNew}
+            className="px-3 py-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 disabled:opacity-50"
+          >
+            {loadingNew ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            Cargar nuevas
+          </button>
+          <Button size="icon" onClick={openCreate} className="w-11 h-11 rounded-2xl">
+            <Plus size={20} />
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
