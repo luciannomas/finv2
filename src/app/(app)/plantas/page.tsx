@@ -138,11 +138,11 @@ export default function PlantasPage() {
 
   const filteredPlants = filterMonth
     ? plants.filter(p => {
-        if (p.cosecha) return p.cosecha.startsWith(filterMonth)
-        if (p.inicio.startsWith(filterMonth)) return true
-        const estMin = addDays(p.inicio, AUTO_MIN)
-        const estMax = addDays(p.inicio, AUTO_MAX)
-        return estMin.startsWith(filterMonth) || estMax.startsWith(filterMonth)
+        if (viewMode === 'cards') {
+          return p.inicio.startsWith(filterMonth)
+        } else {
+          return !!p.cosecha && p.cosecha.startsWith(filterMonth)
+        }
       })
     : plants
 
