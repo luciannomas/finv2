@@ -39,6 +39,7 @@ function getEstado(plant: Plant): string {
   return plant.estado || 'vege'
 }
 
+function estadoColor(estado: string): string {
   const map: Record<string, string> = {
     'vege':      'bg-emerald-500/20 text-emerald-400',
     'pre flora': 'bg-yellow-500/20 text-yellow-400',
