@@ -266,7 +266,7 @@ export default function PlantasPage() {
         cosecha: null,
         gramos: null,
         ...(selectedPlant.estatus === 'cosechada' ? { estatus: 'chica' } : {}),
-        ...(selectedPlant.estado === 'cosechada' ? { estado: 'vege' } : {}),
+        ...(selectedPlant.estado === 'cosechada' ? { estado: 'flora' } : {}),
       }),
     })
     const updated = await res.json()
