@@ -272,7 +272,7 @@ export default function PlantasPage() {
             className="px-3 py-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 disabled:opacity-50"
           >
             {loadingNew ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-            Cargar nuevas
+            Actualizar
           </button>
           <Button size="icon" onClick={openCreate} className="w-11 h-11 rounded-2xl">
             <Plus size={20} />
