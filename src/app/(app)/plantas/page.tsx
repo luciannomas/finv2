@@ -427,11 +427,18 @@ export default function PlantasPage() {
             <tbody>
               {sortedPlants.map((plant, i) => {
                 const dias = diasDesde(plant.inicio)
+                const restMin = AUTO_MIN - dias
+                const enFecha = !plant.cosecha && restMin <= 0
+                const cerca = !plant.cosecha && restMin > 0 && restMin <= 7
                 return (
                   <tr
                     key={plant.id}
                     onClick={() => openDetail(plant)}
-                    className={`border-b border-slate-800/50 cursor-pointer hover:bg-slate-800/40 transition-colors ${i === sortedPlants.length - 1 ? 'border-b-0' : ''}`}
+                    className={`border-b border-slate-800/50 cursor-pointer transition-colors ${i === sortedPlants.length - 1 ? 'border-b-0' : ''} ${
+                      enFecha ? 'bg-rose-500/10 hover:bg-rose-500/15' :
+                      cerca   ? 'bg-rose-500/5 hover:bg-rose-500/10' :
+                                'hover:bg-slate-800/40'
+                    }`}
                   >
                     <td className="px-4 py-3">
                       <span className="text-emerald-400 font-black">#{plant.numero}</span>
