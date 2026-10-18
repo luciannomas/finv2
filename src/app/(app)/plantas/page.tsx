@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, ChevronLeft, CheckCircle2, RefreshCw } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, ChevronLeft, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -153,24 +153,6 @@ export default function PlantasPage() {
   const [showRevertConfirm, setShowRevertConfirm] = useState(false)
   const [revertingHarvest, setRevertingHarvest] = useState(false)
 
-  const [loadingNew, setLoadingNew] = useState(false)
-  const [updateStatus, setUpdateStatus] = useState<'idle' | 'ok' | 'error'>('idle')
-
-  async function handleCargarNuevas() {
-    setLoadingNew(true)
-    setUpdateStatus('idle')
-    try {
-      await fetch('/api/set-fotos-genericas', { method: 'POST' })
-      await loadData()
-      setUpdateStatus('ok')
-      setTimeout(() => setUpdateStatus('idle'), 2000)
-    } catch {
-      setUpdateStatus('error')
-      setTimeout(() => setUpdateStatus('idle'), 3000)
-    } finally {
-      setLoadingNew(false)
-    }
-  }
 
   useEffect(() => { loadData() }, [viewAsId])
 
@@ -317,23 +299,6 @@ export default function PlantasPage() {
           <p className="text-slate-400 text-sm">{plants.length} plantas · indoor</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleCargarNuevas}
-            disabled={loadingNew}
-            className={`px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 disabled:opacity-50 transition-all duration-300 ${
-              updateStatus === 'ok'    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-              updateStatus === 'error' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
-                                        'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
-            }`}
-          >
-            {loadingNew
-              ? <Loader2 size={14} className="animate-spin" />
-              : updateStatus === 'ok'    ? '✓'
-              : updateStatus === 'error' ? '✗'
-              : <RefreshCw size={14} />
-            }
-            {updateStatus === 'idle' && 'Actualizar'}
-          </button>
           <Button size="icon" onClick={openCreate} className="w-11 h-11 rounded-2xl">
             <Plus size={20} />
           </Button>
