@@ -154,20 +154,13 @@ export default function PlantasPage() {
   const [revertingHarvest, setRevertingHarvest] = useState(false)
 
   const [loadingNew, setLoadingNew] = useState(false)
-  const [loadingFotos, setLoadingFotos] = useState(false)
 
   async function handleCargarNuevas() {
     setLoadingNew(true)
     await fetch('/api/add-nuevas-plantas', { method: 'POST' })
-    await loadData()
-    setLoadingNew(false)
-  }
-
-  async function handleSetFotos() {
-    setLoadingFotos(true)
     await fetch('/api/set-fotos-genericas', { method: 'POST' })
     await loadData()
-    setLoadingFotos(false)
+    setLoadingNew(false)
   }
 
   useEffect(() => { loadData() }, [viewAsId])
@@ -315,14 +308,6 @@ export default function PlantasPage() {
           <p className="text-slate-400 text-sm">{plants.length} plantas · indoor</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleSetFotos}
-            disabled={loadingFotos}
-            className="px-3 py-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 disabled:opacity-50"
-          >
-            {loadingFotos ? <Loader2 size={14} className="animate-spin" /> : '🖼'}
-            Fotos
-          </button>
           <button
             onClick={handleCargarNuevas}
             disabled={loadingNew}
