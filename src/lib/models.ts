@@ -93,6 +93,7 @@ const PlantSchema = new Schema(
     cultivo: { type: String, enum: ['indoor', 'outdoor'], default: 'indoor' },
     feno: { type: String, default: null },
     foto: { type: String, default: null },
+    fotoCosecha: { type: String, default: null },
     cosecha: { type: String, default: null },
     gramos: { type: Number, default: null },
     userId: { type: String, required: true },

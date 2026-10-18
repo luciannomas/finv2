@@ -79,6 +79,7 @@ export interface Plant {
   cultivo: 'indoor' | 'outdoor'
   feno?: string
   foto?: string
+  fotoCosecha?: string
   cosecha?: string // YYYY-MM-DD
   gramos?: number
   userId: string

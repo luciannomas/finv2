@@ -73,12 +73,14 @@ interface PlantForm {
   cultivo: 'indoor' | 'outdoor'
   feno: string
   foto: string
+  fotoCosecha: string
   cosecha: string
 }
 
 const emptyForm = (): PlantForm => ({
   numero: '', raza: '', banco: '', inicio: today(), tipo: 'auto',
-  maceta: '', productos: '', estatus: 'chica', estado: 'vege', cultivo: 'indoor', feno: '', foto: '', cosecha: '',
+  maceta: '', productos: '', estatus: 'chica', estado: 'vege', cultivo: 'indoor',
+  feno: '', foto: '', fotoCosecha: '', cosecha: '',
 })
 
 function diasDesde(dateStr: string): number {
@@ -148,7 +150,7 @@ export default function PlantasPage() {
   const [showDetail, setShowDetail] = useState(false)
 
   const [showHarvest, setShowHarvest] = useState(false)
-  const [harvestForm, setHarvestForm] = useState({ fecha: today(), gramos: '' })
+  const [harvestForm, setHarvestForm] = useState({ fecha: today(), gramos: '', fotoCosecha: '' })
   const [savingHarvest, setSavingHarvest] = useState(false)
   const [showRevertConfirm, setShowRevertConfirm] = useState(false)
   const [revertingHarvest, setRevertingHarvest] = useState(false)
@@ -210,7 +212,8 @@ export default function PlantasPage() {
       numero: String(plant.numero), raza: plant.raza, banco: plant.banco, inicio: plant.inicio,
       tipo: plant.tipo, maceta: String(plant.maceta),
       productos: plant.productos.join(', '), estatus: plant.estatus,
-      estado: plant.estado || 'vege', cultivo: plant.cultivo, feno: plant.feno || '', foto: plant.foto || '', cosecha: plant.cosecha || '',
+      estado: plant.estado || 'vege', cultivo: plant.cultivo, feno: plant.feno || '',
+      foto: plant.foto || '', fotoCosecha: plant.fotoCosecha || '', cosecha: plant.cosecha || '',
     })
     setShowForm(true)
     setShowDetail(false)
@@ -232,6 +235,7 @@ export default function PlantasPage() {
       estatus: form.estatus, estado: form.estado, cultivo: form.cultivo,
       feno: form.tipo === 'fem' && form.feno ? form.feno : null,
       foto: form.foto || null,
+      fotoCosecha: form.fotoCosecha || null,
       cosecha: form.cosecha || null,
     }
     if (editingPlant) {
@@ -255,7 +259,7 @@ export default function PlantasPage() {
   }
 
   function openHarvest() {
-    setHarvestForm({ fecha: today(), gramos: '' })
+    setHarvestForm({ fecha: today(), gramos: '', fotoCosecha: '' })
     setShowHarvest(true)
   }
 
@@ -269,6 +273,7 @@ export default function PlantasPage() {
         cosecha: harvestForm.fecha,
         gramos: Number(harvestForm.gramos),
         estado: 'cosechada',
+        fotoCosecha: harvestForm.fotoCosecha || null,
       }),
     })
     const updated = await res.json()
@@ -633,9 +638,18 @@ export default function PlantasPage() {
 
                 return (
                   <div className="flex flex-col gap-4">
-                    {detail.foto && (
-                      <div className="rounded-2xl overflow-hidden border border-slate-700 max-h-56">
-                        <img src={detail.foto} alt={detail.raza} className="w-full h-full object-cover" />
+                    {(detail.fotoCosecha || detail.foto) && (
+                      <div className="flex gap-2">
+                        {detail.foto && (
+                          <div className="flex-1 rounded-2xl overflow-hidden border border-slate-700 max-h-48">
+                            <img src={detail.foto} alt={detail.raza} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        {detail.fotoCosecha && (
+                          <div className="flex-1 rounded-2xl overflow-hidden border border-amber-500/30 max-h-48">
+                            <img src={detail.fotoCosecha} alt="cosecha" className="w-full h-full object-cover" />
+                          </div>
+                        )}
                       </div>
                     )}
                     <div className="grid grid-cols-3 gap-3">
@@ -824,9 +838,14 @@ export default function PlantasPage() {
                   onChange={e => setForm(p => ({ ...p, productos: e.target.value }))} />
               </div>
               <div>
-                <Label className="mb-1.5 block">Foto (URL)</Label>
+                <Label className="mb-1.5 block">Foto planta (URL)</Label>
                 <Input placeholder="https://..." value={form.foto}
                   onChange={e => setForm(p => ({ ...p, foto: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="mb-1.5 block">Foto cosecha (URL)</Label>
+                <Input placeholder="https://..." value={form.fotoCosecha}
+                  onChange={e => setForm(p => ({ ...p, fotoCosecha: e.target.value }))} />
               </div>
               <div>
                 <Label className="mb-1.5 block">Fecha de cosecha (opcional)</Label>
@@ -906,6 +925,11 @@ export default function PlantasPage() {
                 <Label className="mb-1.5 block">Gramos obtenidos</Label>
                 <Input type="number" placeholder="Ej: 45" value={harvestForm.gramos}
                   onChange={e => setHarvestForm(p => ({ ...p, gramos: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="mb-1.5 block">Foto de la cosecha (URL)</Label>
+                <Input placeholder="https://..." value={harvestForm.fotoCosecha}
+                  onChange={e => setHarvestForm(p => ({ ...p, fotoCosecha: e.target.value }))} />
               </div>
               <Button
                 onClick={handleFinalizeHarvest}
