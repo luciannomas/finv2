@@ -160,7 +160,6 @@ export default function PlantasPage() {
     setLoadingNew(true)
     setUpdateStatus('idle')
     try {
-      await fetch('/api/add-nuevas-plantas', { method: 'POST' })
       await fetch('/api/set-fotos-genericas', { method: 'POST' })
       await loadData()
       setUpdateStatus('ok')
