@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, ChevronLeft, CheckCircle2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, ChevronLeft, CheckCircle2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -153,6 +153,24 @@ export default function PlantasPage() {
   const [showRevertConfirm, setShowRevertConfirm] = useState(false)
   const [revertingHarvest, setRevertingHarvest] = useState(false)
 
+  const [loadingFotos, setLoadingFotos] = useState(false)
+  const [fotosStatus, setFotosStatus] = useState<'idle' | 'ok' | 'error'>('idle')
+
+  async function handleSetFotos() {
+    setLoadingFotos(true)
+    setFotosStatus('idle')
+    try {
+      await fetch('/api/set-fotos-genericas', { method: 'POST' })
+      await loadData()
+      setFotosStatus('ok')
+      setTimeout(() => setFotosStatus('idle'), 2000)
+    } catch {
+      setFotosStatus('error')
+      setTimeout(() => setFotosStatus('idle'), 3000)
+    } finally {
+      setLoadingFotos(false)
+    }
+  }
 
   useEffect(() => { loadData() }, [viewAsId])
 
@@ -299,6 +317,23 @@ export default function PlantasPage() {
           <p className="text-slate-400 text-sm">{plants.length} plantas · indoor</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleSetFotos}
+            disabled={loadingFotos}
+            className={`px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 disabled:opacity-50 transition-all duration-300 ${
+              fotosStatus === 'ok'    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+              fotosStatus === 'error' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                                       'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+            }`}
+          >
+            {loadingFotos
+              ? <Loader2 size={14} className="animate-spin" />
+              : fotosStatus === 'ok'    ? '✓'
+              : fotosStatus === 'error' ? '✗'
+              : <RefreshCw size={14} />
+            }
+            {fotosStatus === 'idle' && 'Fotos'}
+          </button>
           <Button size="icon" onClick={openCreate} className="w-11 h-11 rounded-2xl">
             <Plus size={20} />
           </Button>
