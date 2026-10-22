@@ -162,7 +162,9 @@ export default function PlantasPage() {
     setLoadingFotos(true)
     setFotosStatus('idle')
     try {
-      await fetch('/api/set-fotos-genericas', { method: 'POST' })
+      const r1 = await fetch('/api/add-nuevas-plantas', { method: 'POST' })
+      const r2 = await fetch('/api/set-fotos-genericas', { method: 'POST' })
+      if (!r1.ok || !r2.ok) throw new Error('fallo')
       await loadData()
       setFotosStatus('ok')
       setTimeout(() => setFotosStatus('idle'), 2000)
@@ -337,7 +339,7 @@ export default function PlantasPage() {
               : fotosStatus === 'error' ? '✗'
               : <RefreshCw size={14} />
             }
-            {fotosStatus === 'idle' && 'Fotos'}
+            {fotosStatus === 'idle' && 'Actualizar'}
           </button>
           <Button size="icon" onClick={openCreate} className="w-11 h-11 rounded-2xl">
             <Plus size={20} />
