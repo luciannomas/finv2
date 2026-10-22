@@ -163,8 +163,7 @@ export default function PlantasPage() {
     setFotosStatus('idle')
     try {
       const r1 = await fetch('/api/add-nuevas-plantas', { method: 'POST' })
-      const r2 = await fetch('/api/set-fotos-genericas', { method: 'POST' })
-      if (!r1.ok || !r2.ok) throw new Error('fallo')
+      if (!r1.ok) throw new Error('fallo')
       await loadData()
       setFotosStatus('ok')
       setTimeout(() => setFotosStatus('idle'), 2000)
