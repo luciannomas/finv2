@@ -94,6 +94,11 @@ const PlantSchema = new Schema(
     feno: { type: String, default: null },
     foto: { type: String, default: null },
     fotoCosecha: { type: String, default: null },
+    medios: {
+      type: [{ url: { type: String, required: true }, fecha: { type: String } }],
+      default: [],
+      _id: false,
+    },
     cosecha: { type: String, default: null },
     gramos: { type: Number, default: null },
     userId: { type: String, required: true },

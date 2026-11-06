@@ -1,10 +1,15 @@
 'use client'
 
 import { upload } from '@vercel/blob/client'
-import { Camera, ImagePlus, Loader2, Trash2, X } from 'lucide-react'
+import { Camera, ImagePlus, Loader2, Plus, Trash2, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
+export interface Medio {
+  url: string
+  fecha: string
+}
 
 export function isVideoUrl(url: string): boolean {
   return /\.(mp4|mov|webm|m4v|quicktime)(\?|$)/i.test(url)
@@ -191,6 +196,96 @@ export function MediaUpload({
         onChange={e => onChange(e.target.value)}
         className="mt-2"
       />
+    </div>
+  )
+}
+
+// Gallery of media (photos/videos) each with its own date, to track progression.
+export function MediaGallery({
+  items,
+  onAdd,
+  onDelete,
+  onDateChange,
+}: {
+  items: Medio[]
+  onAdd: (url: string) => Promise<void> | void
+  onDelete: (url: string) => Promise<void> | void
+  onDateChange: (url: string, fecha: string) => Promise<void> | void
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  const sorted = [...items].sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''))
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBusy(true)
+    setError('')
+    try {
+      const blob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+      })
+      await onAdd(blob.url)
+    } catch {
+      setError('No se pudo subir. ¿Está configurado el storage?')
+    } finally {
+      setBusy(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-slate-300 text-sm font-semibold">Galería · progresión</p>
+        <span className="text-slate-500 text-xs">{items.length} archivo{items.length === 1 ? '' : 's'}</span>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,video/*"
+        onChange={handleFile}
+        className="hidden"
+      />
+
+      <div className="grid grid-cols-2 gap-2">
+        {sorted.map(m => (
+          <div key={m.url} className="rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
+            <div className="relative max-h-40">
+              <MediaView src={m.url} className="w-full h-full object-cover max-h-40" />
+              <button
+                type="button"
+                onClick={() => onDelete(m.url)}
+                className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-black/60 text-rose-400 hover:bg-black/80"
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+            <input
+              type="date"
+              value={m.fecha || ''}
+              onChange={e => onDateChange(m.url, e.target.value)}
+              className="w-full bg-slate-800 text-slate-300 text-xs px-2 py-1.5 border-t border-slate-700 focus:outline-none"
+            />
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={busy}
+          className="flex flex-col items-center justify-center gap-1.5 min-h-[9rem] rounded-xl border border-dashed border-slate-700 bg-slate-800/50 text-slate-400 text-xs font-medium hover:bg-slate-800 hover:text-white disabled:opacity-50 transition-colors"
+        >
+          {busy ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
+          {busy ? 'Subiendo...' : 'Agregar'}
+        </button>
+      </div>
+
+      {error && <p className="text-rose-400 text-xs mt-1.5">{error}</p>}
     </div>
   )
 }

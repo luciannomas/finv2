@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { today } from '@/lib/utils'
 import type { Plant } from '@/lib/types'
 import { useViewAs } from '@/lib/view-as-context'
-import { MediaUpload, MediaThumb, MediaSlot } from '@/components/media-upload'
+import { MediaUpload, MediaThumb, MediaSlot, MediaGallery } from '@/components/media-upload'
 
 const TAMANO_OPTIONS = ['chica', 'mediana', 'grande']
 const ESTADO_OPTIONS = [
@@ -265,6 +265,38 @@ export default function PlantasPage() {
     await saveMedia(field, '')
   }
 
+  async function updateMedios(nextMedios: { url: string; fecha: string }[]) {
+    if (!selectedPlant) return
+    const res = await fetch(`/api/plantas/${selectedPlant.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ medios: nextMedios }),
+    })
+    const updated = await res.json()
+    setPlants(prev => prev.map(p => p.id === selectedPlant.id ? updated : p))
+    setSelectedPlant(updated)
+  }
+
+  async function addMedio(url: string) {
+    const current = selectedPlant?.medios || []
+    await updateMedios([...current, { url, fecha: today() }])
+  }
+
+  async function deleteMedio(url: string) {
+    if (url) {
+      fetch('/api/upload/delete', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      }).catch(() => {})
+    }
+    const current = selectedPlant?.medios || []
+    await updateMedios(current.filter(m => m.url !== url))
+  }
+
+  async function changeMedioFecha(url: string, fecha: string) {
+    const current = selectedPlant?.medios || []
+    await updateMedios(current.map(m => m.url === url ? { ...m, fecha } : m))
+  }
+
   function openHarvest() {
     setHarvestForm({ fecha: today(), gramos: '', fotoCosecha: '' })
     setShowHarvest(true)
@@ -429,6 +461,7 @@ export default function PlantasPage() {
             const diasTotales = cosechada
               ? Math.floor((new Date(plant.cosecha! + 'T00:00:00').getTime() - new Date(plant.inicio + 'T00:00:00').getTime()) / 86400000)
               : null
+            const thumb = plant.foto || plant.medios?.[0]?.url || ''
 
             return (
               <div
@@ -452,9 +485,9 @@ export default function PlantasPage() {
                     <span className="text-[9px] font-semibold text-pink-400 leading-none mt-0.5">{plant.feno}</span>
                   )}
                 </div>
-                {plant.foto && (
+                {thumb && (
                   <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-700 flex-shrink-0 bg-slate-800">
-                    <MediaThumb src={plant.foto} className="w-full h-full object-cover" />
+                    <MediaThumb src={thumb} className="w-full h-full object-cover" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -541,9 +574,9 @@ export default function PlantasPage() {
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
-                        {plant.foto && (
+                        {(plant.foto || plant.medios?.[0]?.url) && (
                           <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-700 flex-shrink-0 bg-slate-800">
-                            <MediaThumb src={plant.foto} className="w-full h-full object-cover" />
+                            <MediaThumb src={plant.foto || plant.medios![0].url} className="w-full h-full object-cover" />
                           </div>
                         )}
                         <div className="min-w-0">
@@ -643,20 +676,18 @@ export default function PlantasPage() {
 
                 return (
                   <div className="flex flex-col gap-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      <MediaSlot
-                        label="Foto / video planta"
-                        value={detail.foto || ''}
-                        onSave={url => saveMedia('foto', url)}
-                        onDelete={() => deleteMedia('foto', detail.foto || '')}
-                      />
-                      <MediaSlot
-                        label="Foto / video cosecha"
-                        value={detail.fotoCosecha || ''}
-                        onSave={url => saveMedia('fotoCosecha', url)}
-                        onDelete={() => deleteMedia('fotoCosecha', detail.fotoCosecha || '')}
-                      />
-                    </div>
+                    <MediaGallery
+                      items={detail.medios || []}
+                      onAdd={addMedio}
+                      onDelete={deleteMedio}
+                      onDateChange={changeMedioFecha}
+                    />
+                    <MediaSlot
+                      label="Foto / video cosecha"
+                      value={detail.fotoCosecha || ''}
+                      onSave={url => saveMedia('fotoCosecha', url)}
+                      onDelete={() => deleteMedia('fotoCosecha', detail.fotoCosecha || '')}
+                    />
                     <div className="grid grid-cols-3 gap-3">
                       <div className="bg-slate-800 rounded-xl p-3 text-center">
                         <p className="text-white font-bold text-lg">{cosechada ? diasTotales : dias}</p>

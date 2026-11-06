@@ -80,6 +80,7 @@ export interface Plant {
   feno?: string
   foto?: string
   fotoCosecha?: string
+  medios?: { url: string; fecha: string }[]
   cosecha?: string // YYYY-MM-DD
   gramos?: number
   userId: string
