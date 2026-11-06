@@ -7,9 +7,9 @@ const NUEVAS = [
   { numero: 10, raza: 'The Glove',     banco: 'Lit Farms',  feno: 'f1', inicio: '2026-10-25' },
   { numero: 11, raza: 'Cubana Affair', banco: 'Ziploc',     feno: 'f1', inicio: '2026-10-25' },
   { numero: 11, raza: 'Cubana Affair', banco: 'Ziploc',     feno: 'f2', inicio: '2026-10-25' },
-  { numero: 12, raza: 'Banana Dessert', banco: 'a definir', feno: 'f1', inicio: '2026-10-28' },
-  { numero: 13, raza: 'Tropicana',     banco: 'a definir',  feno: 'f1', inicio: '2026-10-28' },
-  { numero: 14, raza: 'Slazp x Opalo', banco: 'a definir',  feno: 'f1', inicio: '2026-10-28' },
+  { numero: 12, raza: 'Banana Dessert', banco: 'R-Kiem',         feno: 'f1', inicio: '2026-10-28' },
+  { numero: 13, raza: 'Tropicana',      banco: 'Sweed Lab',      feno: 'f1', inicio: '2026-10-28' },
+  { numero: 14, raza: 'Slapz x Opalo',  banco: 'Baires Genetics', feno: 'f1', inicio: '2026-10-28' },
 ]
 
 export async function POST() {
