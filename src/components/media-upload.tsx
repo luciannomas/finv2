@@ -1,7 +1,7 @@
 'use client'
 
 import { upload } from '@vercel/blob/client'
-import { Camera, ImagePlus, Loader2, Plus, Trash2, X } from 'lucide-react'
+import { Camera, ImagePlus, Loader2, Trash2, Video, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -42,12 +42,14 @@ export function MediaSlot({
   onSave: (url: string) => Promise<void> | void
   onDelete: () => Promise<void> | void
 }) {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const photoRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    const ref = e.target
     if (!file) return
     setBusy(true)
     setError('')
@@ -61,7 +63,7 @@ export function MediaSlot({
       setError('No se pudo subir. ¿Está configurado el storage?')
     } finally {
       setBusy(false)
-      if (inputRef.current) inputRef.current.value = ''
+      ref.value = ''
     }
   }
 
@@ -77,45 +79,41 @@ export function MediaSlot({
   return (
     <div>
       <p className="text-slate-400 text-xs font-semibold mb-1.5">{label}</p>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*,video/*"
-        onChange={handleFile}
-        className="hidden"
-      />
+      <input ref={photoRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+      <input ref={videoRef} type="file" accept="video/*" onChange={handleFile} className="hidden" />
       {value ? (
         <div className="relative rounded-2xl overflow-hidden border border-slate-700 max-h-56 bg-slate-900">
           <MediaView src={value} className="w-full h-full object-cover max-h-56" />
-          <div className="absolute top-2 right-2 flex gap-1.5">
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              disabled={busy}
-              className="p-2 rounded-full bg-black/60 text-white hover:bg-black/80 disabled:opacity-50"
-            >
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={busy}
-              className="p-2 rounded-full bg-black/60 text-rose-400 hover:bg-black/80 disabled:opacity-50"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={busy}
+            className="absolute top-2 right-2 p-2 rounded-full bg-black/60 text-rose-400 hover:bg-black/80 disabled:opacity-50"
+          >
+            {busy ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+          </button>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={busy}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-slate-700 bg-slate-800/50 text-slate-400 text-sm font-medium hover:bg-slate-800 hover:text-white disabled:opacity-50 transition-colors"
-        >
-          {busy ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-          {busy ? 'Subiendo...' : 'Subir foto / video'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => photoRef.current?.click()}
+            disabled={busy}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-slate-700 bg-slate-800/50 text-slate-400 text-sm font-medium hover:bg-slate-800 hover:text-white disabled:opacity-50 transition-colors"
+          >
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+            Foto
+          </button>
+          <button
+            type="button"
+            onClick={() => videoRef.current?.click()}
+            disabled={busy}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-slate-700 bg-slate-800/50 text-slate-400 text-sm font-medium hover:bg-slate-800 hover:text-white disabled:opacity-50 transition-colors"
+          >
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <Video size={16} />}
+            Video
+          </button>
+        </div>
       )}
       {error && <p className="text-rose-400 text-xs mt-1.5">{error}</p>}
     </div>
@@ -131,12 +129,14 @@ export function MediaUpload({
   value: string
   onChange: (url: string) => void
 }) {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const photoRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    const ref = e.target
     if (!file) return
     setUploading(true)
     setError('')
@@ -150,7 +150,7 @@ export function MediaUpload({
       setError('No se pudo subir. ¿Está configurado el storage?')
     } finally {
       setUploading(false)
-      if (inputRef.current) inputRef.current.value = ''
+      ref.value = ''
     }
   }
 
@@ -171,22 +171,28 @@ export function MediaUpload({
         </div>
       )}
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*,video/*"
-        onChange={handleFile}
-        className="hidden"
-      />
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        disabled={uploading}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-medium hover:bg-slate-700 disabled:opacity-50 transition-colors"
-      >
-        {uploading ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
-        {uploading ? 'Subiendo...' : value ? 'Cambiar foto/video' : 'Subir foto/video'}
-      </button>
+      <input ref={photoRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+      <input ref={videoRef} type="file" accept="video/*" onChange={handleFile} className="hidden" />
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => photoRef.current?.click()}
+          disabled={uploading}
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-medium hover:bg-slate-700 disabled:opacity-50 transition-colors"
+        >
+          {uploading ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
+          Foto
+        </button>
+        <button
+          type="button"
+          onClick={() => videoRef.current?.click()}
+          disabled={uploading}
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-medium hover:bg-slate-700 disabled:opacity-50 transition-colors"
+        >
+          {uploading ? <Loader2 size={16} className="animate-spin" /> : <Video size={16} />}
+          Video
+        </button>
+      </div>
 
       {error && <p className="text-rose-400 text-xs mt-1.5">{error}</p>}
 
@@ -212,7 +218,8 @@ export function MediaGallery({
   onDelete: (url: string) => Promise<void> | void
   onDateChange: (url: string, fecha: string) => Promise<void> | void
 }) {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const photoRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -220,6 +227,7 @@ export function MediaGallery({
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    const ref = e.target
     if (!file) return
     setBusy(true)
     setError('')
@@ -233,7 +241,7 @@ export function MediaGallery({
       setError('No se pudo subir. ¿Está configurado el storage?')
     } finally {
       setBusy(false)
-      if (inputRef.current) inputRef.current.value = ''
+      ref.value = ''
     }
   }
 
@@ -244,13 +252,8 @@ export function MediaGallery({
         <span className="text-slate-500 text-xs">{items.length} archivo{items.length === 1 ? '' : 's'}</span>
       </div>
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*,video/*"
-        onChange={handleFile}
-        className="hidden"
-      />
+      <input ref={photoRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+      <input ref={videoRef} type="file" accept="video/*" onChange={handleFile} className="hidden" />
 
       <div className="grid grid-cols-2 gap-2">
         {sorted.map(m => (
@@ -274,15 +277,26 @@ export function MediaGallery({
           </div>
         ))}
 
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={busy}
-          className="flex flex-col items-center justify-center gap-1.5 min-h-[9rem] rounded-xl border border-dashed border-slate-700 bg-slate-800/50 text-slate-400 text-xs font-medium hover:bg-slate-800 hover:text-white disabled:opacity-50 transition-colors"
-        >
-          {busy ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
-          {busy ? 'Subiendo...' : 'Agregar'}
-        </button>
+        <div className="flex flex-col gap-2 min-h-[9rem]">
+          <button
+            type="button"
+            onClick={() => photoRef.current?.click()}
+            disabled={busy}
+            className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-700 bg-slate-800/50 text-slate-400 text-xs font-medium hover:bg-slate-800 hover:text-white disabled:opacity-50 transition-colors"
+          >
+            {busy ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
+            Foto
+          </button>
+          <button
+            type="button"
+            onClick={() => videoRef.current?.click()}
+            disabled={busy}
+            className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-700 bg-slate-800/50 text-slate-400 text-xs font-medium hover:bg-slate-800 hover:text-white disabled:opacity-50 transition-colors"
+          >
+            {busy ? <Loader2 size={18} className="animate-spin" /> : <Video size={18} />}
+            Video
+          </button>
+        </div>
       </div>
 
       {error && <p className="text-rose-400 text-xs mt-1.5">{error}</p>}
