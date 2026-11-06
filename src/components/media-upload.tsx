@@ -1,7 +1,7 @@
 'use client'
 
 import { upload } from '@vercel/blob/client'
-import { Camera, ImagePlus, Loader2, Trash2, Video, X } from 'lucide-react'
+import { Camera, ImagePlus, Loader2, Play, Trash2, Video, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,6 +30,31 @@ export function MediaThumb({ src, className }: { src: string; className?: string
   return <img src={src} alt="" className={className} />
 }
 
+// Fullscreen viewer: tap to close, shows the media at full size.
+export function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-3"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-4 right-4 p-2 rounded-full bg-white/10 text-white hover:bg-white/20"
+      >
+        <X size={22} />
+      </button>
+      <div onClick={e => e.stopPropagation()} className="max-w-full max-h-full">
+        {isVideoUrl(src) ? (
+          <video src={src} controls autoPlay playsInline className="max-w-full max-h-[88vh] rounded-lg" />
+        ) : (
+          <img src={src} alt="" className="max-w-full max-h-[88vh] object-contain rounded-lg" />
+        )}
+      </div>
+    </div>
+  )
+}
+
 // Self-contained media slot: uploads to Blob and persists via onSave, deletes via onDelete.
 export function MediaSlot({
   label,
@@ -46,6 +71,7 @@ export function MediaSlot({
   const videoRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [viewing, setViewing] = useState(false)
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -83,7 +109,17 @@ export function MediaSlot({
       <input ref={videoRef} type="file" accept="video/*" onChange={handleFile} className="hidden" />
       {value ? (
         <div className="relative rounded-2xl overflow-hidden border border-slate-700 max-h-56 bg-slate-900">
-          <MediaView src={value} className="w-full h-full object-cover max-h-56" />
+          <button type="button" onClick={() => setViewing(true)} className="block w-full">
+            <MediaThumb src={value} className="w-full h-full object-cover max-h-56" />
+            {isVideoUrl(value) && (
+              <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="p-2.5 rounded-full bg-black/50 text-white">
+                  <Play size={18} fill="currentColor" />
+                </span>
+              </span>
+            )}
+          </button>
+          {viewing && <Lightbox src={value} onClose={() => setViewing(false)} />}
           <button
             type="button"
             onClick={handleDelete}
@@ -222,6 +258,7 @@ export function MediaGallery({
   const videoRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [viewing, setViewing] = useState<string | null>(null)
 
   const sorted = [...items].sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''))
 
@@ -258,8 +295,21 @@ export function MediaGallery({
       <div className="grid grid-cols-2 gap-2">
         {sorted.map(m => (
           <div key={m.url} className="rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
-            <div className="relative max-h-40">
-              <MediaView src={m.url} className="w-full h-full object-cover max-h-40" />
+            <div className="relative h-40">
+              <button
+                type="button"
+                onClick={() => setViewing(m.url)}
+                className="block w-full h-full"
+              >
+                <MediaThumb src={m.url} className="w-full h-full object-cover" />
+                {isVideoUrl(m.url) && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="p-2.5 rounded-full bg-black/50 text-white">
+                      <Play size={18} fill="currentColor" />
+                    </span>
+                  </span>
+                )}
+              </button>
               <button
                 type="button"
                 onClick={() => onDelete(m.url)}
@@ -300,6 +350,8 @@ export function MediaGallery({
       </div>
 
       {error && <p className="text-rose-400 text-xs mt-1.5">{error}</p>}
+
+      {viewing && <Lightbox src={viewing} onClose={() => setViewing(null)} />}
     </div>
   )
 }
