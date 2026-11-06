@@ -17,6 +17,14 @@ export function MediaView({ src, alt, className }: { src: string; alt?: string; 
   return <img src={src} alt={alt} className={className} />
 }
 
+// Lightweight preview for lists: images render directly, videos show their first frame.
+export function MediaThumb({ src, className }: { src: string; className?: string }) {
+  if (isVideoUrl(src)) {
+    return <video src={`${src}#t=0.1`} muted playsInline preload="metadata" className={className} />
+  }
+  return <img src={src} alt="" className={className} />
+}
+
 export function MediaUpload({
   label,
   value,

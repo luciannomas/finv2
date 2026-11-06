@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, ChevronLeft, CheckCircle2, RefreshCw } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, Leaf, ChevronRight, ChevronLeft, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { today } from '@/lib/utils'
 import type { Plant } from '@/lib/types'
 import { useViewAs } from '@/lib/view-as-context'
-import { MediaUpload, MediaView } from '@/components/media-upload'
+import { MediaUpload, MediaView, MediaThumb } from '@/components/media-upload'
 
 const TAMANO_OPTIONS = ['chica', 'mediana', 'grande']
 const ESTADO_OPTIONS = [
@@ -103,6 +103,7 @@ function formatFecha(dateStr: string): string {
 // Days remaining until earliest harvest window (AUTO_MIN). Negative = ya en fecha.
 function diasHastaCosecha(plant: Plant): number {
   if (plant.cosecha) return -999 // already harvested — goes to end
+  if (plant.tipo !== 'auto') return 9999 // fem: sin ventana por días, va al final de las activas
   const dias = diasDesde(plant.inicio)
   return AUTO_MIN - dias
 }
@@ -119,6 +120,9 @@ function tamanoColor(tamano: string): string {
 function CosechaEstimada({ plant }: { plant: Plant }) {
   if (plant.cosecha) {
     return <span className="text-amber-400 text-xs font-medium">🌾 {formatFecha(plant.cosecha)}</span>
+  }
+  if (plant.tipo !== 'auto') {
+    return <span className="text-slate-500 text-xs">s/ floración</span>
   }
   const dias = diasDesde(plant.inicio)
   const restMin = AUTO_MIN - dias
@@ -156,28 +160,6 @@ export default function PlantasPage() {
   const [showRevertConfirm, setShowRevertConfirm] = useState(false)
   const [revertingHarvest, setRevertingHarvest] = useState(false)
 
-  const [loadingFotos, setLoadingFotos] = useState(false)
-  const [fotosStatus, setFotosStatus] = useState<'idle' | 'ok' | 'error'>('idle')
-
-  async function handleSetFotos() {
-    setLoadingFotos(true)
-    setFotosStatus('idle')
-    try {
-      const r1 = await fetch('/api/add-nuevas-plantas', { method: 'POST' })
-      if (!r1.ok) throw new Error('fallo')
-      await loadData()
-      setFotosStatus('ok')
-      setTimeout(() => setFotosStatus('idle'), 2000)
-    } catch {
-      setFotosStatus('error')
-      setTimeout(() => setFotosStatus('idle'), 3000)
-    } finally {
-      setLoadingFotos(false)
-    }
-  }
-
-  useEffect(() => { loadData() }, [viewAsId])
-
   async function loadData() {
     setLoading(true)
     const vq = viewAsId ? `?viewAs=${viewAsId}` : ''
@@ -185,6 +167,8 @@ export default function PlantasPage() {
     setPlants(await res.json())
     setLoading(false)
   }
+
+  useEffect(() => { loadData() }, [viewAsId])
 
   const filteredPlants = filterMonth
     ? plants.filter(p => {
@@ -323,28 +307,9 @@ export default function PlantasPage() {
           <h1 className="text-2xl font-bold text-white">Plantas</h1>
           <p className="text-slate-400 text-sm">{plants.length} plantas · indoor</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleSetFotos}
-            disabled={loadingFotos}
-            className={`px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 disabled:opacity-50 transition-all duration-300 ${
-              fotosStatus === 'ok'    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-              fotosStatus === 'error' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
-                                       'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
-            }`}
-          >
-            {loadingFotos
-              ? <Loader2 size={14} className="animate-spin" />
-              : fotosStatus === 'ok'    ? '✓'
-              : fotosStatus === 'error' ? '✗'
-              : <RefreshCw size={14} />
-            }
-            {fotosStatus === 'idle' && 'Actualizar'}
-          </button>
-          <Button size="icon" onClick={openCreate} className="w-11 h-11 rounded-2xl">
-            <Plus size={20} />
-          </Button>
-        </div>
+        <Button size="icon" onClick={openCreate} className="w-11 h-11 rounded-2xl">
+          <Plus size={20} />
+        </Button>
       </div>
 
       {/* Tabs */}
@@ -466,6 +431,11 @@ export default function PlantasPage() {
                     <span className="text-[9px] font-semibold text-pink-400 leading-none mt-0.5">{plant.feno}</span>
                   )}
                 </div>
+                {plant.foto && (
+                  <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-700 flex-shrink-0 bg-slate-800">
+                    <MediaThumb src={plant.foto} className="w-full h-full object-cover" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-white font-bold text-sm truncate">{plant.raza}</p>
@@ -523,9 +493,10 @@ export default function PlantasPage() {
             <tbody>
               {sortedPlants.map((plant, i) => {
                 const dias = diasDesde(plant.inicio)
+                const esAuto = plant.tipo === 'auto'
                 const restMin = AUTO_MIN - dias
-                const enFecha = !plant.cosecha && restMin <= 0
-                const cerca = !plant.cosecha && restMin > 0 && restMin <= 7
+                const enFecha = esAuto && !plant.cosecha && restMin <= 0
+                const cerca = esAuto && !plant.cosecha && restMin > 0 && restMin <= 7
                 return (
                   <tr
                     key={plant.id}
@@ -548,8 +519,17 @@ export default function PlantasPage() {
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <p className="text-white font-semibold">{plant.raza}</p>
-                      <p className="text-slate-500 text-xs">{plant.banco}</p>
+                      <div className="flex items-center gap-2">
+                        {plant.foto && (
+                          <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-700 flex-shrink-0 bg-slate-800">
+                            <MediaThumb src={plant.foto} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-white font-semibold truncate">{plant.raza}</p>
+                          <p className="text-slate-500 text-xs truncate">{plant.banco}</p>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-3 py-3 text-slate-300">{formatFecha(plant.inicio)}</td>
                     <td className="px-3 py-3 text-slate-300 font-medium">{dias}d</td>
@@ -567,11 +547,13 @@ export default function PlantasPage() {
                             <p className="text-amber-300 font-bold mt-0.5">{plant.gramos}g</p>
                           )}
                         </div>
-                      ) : (
+                      ) : esAuto ? (
                         <div className="text-xs">
                           <p className="text-slate-400">{formatFecha(addDays(plant.inicio, AUTO_MIN))} –</p>
                           <p className="text-slate-400">{formatFecha(addDays(plant.inicio, AUTO_MAX))}</p>
                         </div>
+                      ) : (
+                        <span className="text-slate-500 text-xs">s/ floración</span>
                       )}
                     </td>
                     <td className="px-3 py-3">
@@ -709,13 +691,20 @@ export default function PlantasPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
-                          <p className="text-emerald-400 text-xs font-semibold mb-0.5">Cosecha estimada</p>
-                          <p className="text-white text-sm font-bold">{formatFecha(estMin)} — {formatFecha(estMax)}</p>
-                          <p className="text-emerald-400/70 text-xs mt-0.5">
-                            <CosechaEstimada plant={detail} />
-                          </p>
-                        </div>
+                        {detail.tipo === 'auto' ? (
+                          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+                            <p className="text-emerald-400 text-xs font-semibold mb-0.5">Cosecha estimada</p>
+                            <p className="text-white text-sm font-bold">{formatFecha(estMin)} — {formatFecha(estMax)}</p>
+                            <p className="text-emerald-400/70 text-xs mt-0.5">
+                              <CosechaEstimada plant={detail} />
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3">
+                            <p className="text-slate-300 text-xs font-semibold mb-0.5">Feminizada</p>
+                            <p className="text-slate-400 text-xs">La cosecha depende del cambio a floración, no de los días desde el inicio.</p>
+                          </div>
+                        )}
                         <Button
                           onClick={openHarvest}
                           className="w-full bg-amber-600 hover:bg-amber-500 text-white"
