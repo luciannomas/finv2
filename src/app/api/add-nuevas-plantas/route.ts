@@ -4,18 +4,12 @@ import { PlantModel } from '@/lib/models'
 import { NextResponse } from 'next/server'
 
 const NUEVAS = [
-  { numero: 6, raza: 'Critical +2', maceta: 11 },
-  { numero: 6, raza: 'Critical +2', maceta: 11 },
-  { numero: 6, raza: 'Critical +2', maceta: 11 },
-  { numero: 7, raza: 'Black Dom',   maceta: 11 },
-  { numero: 7, raza: 'Black Dom',   maceta: 11 },
-  { numero: 7, raza: 'Black Dom',   maceta: 11 },
-  { numero: 8, raza: 'Moby-D',      maceta: 11 },
-  { numero: 8, raza: 'Moby-D',      maceta: 11 },
-  { numero: 8, raza: 'Moby-D',      maceta: 11 },
-  { numero: 9, raza: 'Northern',    maceta: 11 },
-  { numero: 9, raza: 'Northern',    maceta: 11 },
-  { numero: 9, raza: 'Northern',    maceta: 11 },
+  { numero: 10, raza: 'The Glove',     banco: 'Lit Farms',  feno: 'f1', inicio: '2026-10-25' },
+  { numero: 11, raza: 'Cubana Affair', banco: 'Ziploc',     feno: 'f1', inicio: '2026-10-25' },
+  { numero: 11, raza: 'Cubana Affair', banco: 'Ziploc',     feno: 'f2', inicio: '2026-10-25' },
+  { numero: 12, raza: 'Banana Dessert', banco: 'a definir', feno: 'f1', inicio: '2026-10-28' },
+  { numero: 13, raza: 'Tropicana',     banco: 'a definir',  feno: 'f1', inicio: '2026-10-28' },
+  { numero: 14, raza: 'Slazp x Opalo', banco: 'a definir',  feno: 'f1', inicio: '2026-10-28' },
 ]
 
 export async function POST() {
@@ -24,23 +18,19 @@ export async function POST() {
 
   await connectDB()
 
-  const existing = await PlantModel.countDocuments({ userId: session.user!.id, numero: { $in: [6,7,8,9] } })
+  const existing = await PlantModel.countDocuments({ userId: session.user!.id, numero: { $in: [10, 11, 12, 13, 14] } })
   if (existing > 0) {
-    const result = await PlantModel.updateMany(
-      { userId: session.user!.id, numero: { $in: [6,7,8,9] }, banco: { $ne: 'BSF' } },
-      { $set: { banco: 'BSF' } }
-    )
-    return NextResponse.json({ success: true, created: 0, updated: result.modifiedCount, message: result.modifiedCount > 0 ? `Banco actualizado a BSF (${result.modifiedCount})` : 'Ya estaban al día' })
+    return NextResponse.json({ success: true, created: 0, message: 'Ya estaban cargadas' })
   }
 
   const plants = await PlantModel.insertMany(
     NUEVAS.map(p => ({
       ...p,
-      banco: 'BSF',
-      inicio: '2026-10-11',
-      tipo: 'auto',
+      tipo: 'fem',
+      maceta: 3,
       productos: ['Eden'],
       estatus: 'chica',
+      estado: 'vege',
       cultivo: 'indoor',
       userId: session.user!.id,
     }))
