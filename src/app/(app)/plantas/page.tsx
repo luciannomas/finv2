@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { today } from '@/lib/utils'
 import type { Plant } from '@/lib/types'
 import { useViewAs } from '@/lib/view-as-context'
+import { MediaUpload, MediaView } from '@/components/media-upload'
 
 const TAMANO_OPTIONS = ['chica', 'mediana', 'grande']
 const ESTADO_OPTIONS = [
@@ -643,12 +644,12 @@ export default function PlantasPage() {
                       <div className="flex gap-2">
                         {detail.foto && (
                           <div className="flex-1 rounded-2xl overflow-hidden border border-slate-700 max-h-48">
-                            <img src={detail.foto} alt={detail.raza} className="w-full h-full object-cover" />
+                            <MediaView src={detail.foto} alt={detail.raza} className="w-full h-full object-cover" />
                           </div>
                         )}
                         {detail.fotoCosecha && (
                           <div className="flex-1 rounded-2xl overflow-hidden border border-amber-500/30 max-h-48">
-                            <img src={detail.fotoCosecha} alt="cosecha" className="w-full h-full object-cover" />
+                            <MediaView src={detail.fotoCosecha} alt="cosecha" className="w-full h-full object-cover" />
                           </div>
                         )}
                       </div>
@@ -838,16 +839,10 @@ export default function PlantasPage() {
                 <Input placeholder="Ej: Eden, Rizo" value={form.productos}
                   onChange={e => setForm(p => ({ ...p, productos: e.target.value }))} />
               </div>
-              <div>
-                <Label className="mb-1.5 block">Foto planta (URL)</Label>
-                <Input placeholder="https://..." value={form.foto}
-                  onChange={e => setForm(p => ({ ...p, foto: e.target.value }))} />
-              </div>
-              <div>
-                <Label className="mb-1.5 block">Foto cosecha (URL)</Label>
-                <Input placeholder="https://..." value={form.fotoCosecha}
-                  onChange={e => setForm(p => ({ ...p, fotoCosecha: e.target.value }))} />
-              </div>
+              <MediaUpload label="Foto / video planta" value={form.foto}
+                onChange={v => setForm(p => ({ ...p, foto: v }))} />
+              <MediaUpload label="Foto / video cosecha" value={form.fotoCosecha}
+                onChange={v => setForm(p => ({ ...p, fotoCosecha: v }))} />
               <div>
                 <Label className="mb-1.5 block">Fecha de cosecha (opcional)</Label>
                 <Input type="date" value={form.cosecha}
@@ -927,11 +922,8 @@ export default function PlantasPage() {
                 <Input type="number" placeholder="Ej: 45" value={harvestForm.gramos}
                   onChange={e => setHarvestForm(p => ({ ...p, gramos: e.target.value }))} />
               </div>
-              <div>
-                <Label className="mb-1.5 block">Foto de la cosecha (URL)</Label>
-                <Input placeholder="https://..." value={harvestForm.fotoCosecha}
-                  onChange={e => setHarvestForm(p => ({ ...p, fotoCosecha: e.target.value }))} />
-              </div>
+              <MediaUpload label="Foto / video de la cosecha" value={harvestForm.fotoCosecha}
+                onChange={v => setHarvestForm(p => ({ ...p, fotoCosecha: v }))} />
               <Button
                 onClick={handleFinalizeHarvest}
                 className="w-full mt-1 bg-amber-600 hover:bg-amber-500 text-white"
