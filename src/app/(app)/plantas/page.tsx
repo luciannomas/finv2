@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { today } from '@/lib/utils'
 import type { Plant } from '@/lib/types'
 import { useViewAs } from '@/lib/view-as-context'
-import { MediaUpload, MediaView, MediaThumb } from '@/components/media-upload'
+import { MediaUpload, MediaThumb, MediaSlot } from '@/components/media-upload'
 
 const TAMANO_OPTIONS = ['chica', 'mediana', 'grande']
 const ESTADO_OPTIONS = [
@@ -242,6 +242,27 @@ export default function PlantasPage() {
     }
     setSaving(false)
     setShowForm(false)
+  }
+
+  async function saveMedia(field: 'foto' | 'fotoCosecha', url: string) {
+    if (!selectedPlant) return
+    const res = await fetch(`/api/plantas/${selectedPlant.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: url || null }),
+    })
+    const updated = await res.json()
+    setPlants(prev => prev.map(p => p.id === selectedPlant.id ? updated : p))
+    setSelectedPlant(updated)
+  }
+
+  async function deleteMedia(field: 'foto' | 'fotoCosecha', url: string) {
+    if (url) {
+      fetch('/api/upload/delete', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      }).catch(() => {})
+    }
+    await saveMedia(field, '')
   }
 
   function openHarvest() {
@@ -622,20 +643,20 @@ export default function PlantasPage() {
 
                 return (
                   <div className="flex flex-col gap-4">
-                    {(detail.fotoCosecha || detail.foto) && (
-                      <div className="flex gap-2">
-                        {detail.foto && (
-                          <div className="flex-1 rounded-2xl overflow-hidden border border-slate-700 max-h-48">
-                            <MediaView src={detail.foto} alt={detail.raza} className="w-full h-full object-cover" />
-                          </div>
-                        )}
-                        {detail.fotoCosecha && (
-                          <div className="flex-1 rounded-2xl overflow-hidden border border-amber-500/30 max-h-48">
-                            <MediaView src={detail.fotoCosecha} alt="cosecha" className="w-full h-full object-cover" />
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <div className="grid grid-cols-2 gap-2">
+                      <MediaSlot
+                        label="Foto / video planta"
+                        value={detail.foto || ''}
+                        onSave={url => saveMedia('foto', url)}
+                        onDelete={() => deleteMedia('foto', detail.foto || '')}
+                      />
+                      <MediaSlot
+                        label="Foto / video cosecha"
+                        value={detail.fotoCosecha || ''}
+                        onSave={url => saveMedia('fotoCosecha', url)}
+                        onDelete={() => deleteMedia('fotoCosecha', detail.fotoCosecha || '')}
+                      />
+                    </div>
                     <div className="grid grid-cols-3 gap-3">
                       <div className="bg-slate-800 rounded-xl p-3 text-center">
                         <p className="text-white font-bold text-lg">{cosechada ? diasTotales : dias}</p>
